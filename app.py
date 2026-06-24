@@ -53,6 +53,8 @@ GOOGLE_SHEETS_CONFIG_FILE = Path("google_sheets_config.json")
 SERVICE_ACCOUNT_FILE = Path("service_account.json")
 TEAM_MEMBERS_FILE = Path("team_members.txt")
 AUTH_DB_FILE = Path("auth.sqlite3")
+CHANGE_LOG_SHEET_TITLE = "Change Log"
+CHANGE_LOG_HEADERS = ["Timestamp", "Action", "Event", "Guest", "DJ / Team Member", "Team Member/User", "Details"]
 SHEETS_BOOTSTRAPPED = False
 SHEETS_BOOTSTRAP_IN_PROGRESS = False
 PIN_TOKEN_HOURS = 1
@@ -422,6 +424,79 @@ def slugify_sheet_title(value):
     return cleaned
 
 
+def full_guest_name(guest):
+    return f'{guest.get("firstName", "")} {guest.get("lastName", "")}'.strip()
+
+
+def guest_role(guest):
+    return guest.get("teamMember", "") or guest.get("dj", "")
+
+
+def event_name_by_id(data, event_id):
+    event = next((event for event in data.get("events", []) if event.get("id") == event_id), None)
+    return event.get("name", "") if event else ""
+
+
+def build_change_log_entry(action, event_name="", guest_name="", role="", user="", details=""):
+    return {
+        "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
+        "action": action,
+        "event": event_name or "",
+        "guest": guest_name or "",
+        "role": role or "",
+        "user": user or get_current_member_name() or "System",
+        "details": details or "",
+    }
+
+
+def change_log_row(entry):
+    return [
+        entry.get("timestamp", ""),
+        entry.get("action", ""),
+        entry.get("event", ""),
+        entry.get("guest", ""),
+        entry.get("role", ""),
+        entry.get("user", ""),
+        entry.get("details", ""),
+    ]
+
+
+def ensure_change_log_sheet(spreadsheet, existing_worksheets=None):
+    """Create or reuse the Change Log tab and make sure it has headers.
+
+    This function intentionally never clears the tab. It preserves the audit history
+    and only appends new rows.
+    """
+    existing_worksheets = existing_worksheets or {worksheet.title: worksheet for worksheet in spreadsheet.worksheets()}
+
+    if CHANGE_LOG_SHEET_TITLE in existing_worksheets:
+        worksheet = existing_worksheets[CHANGE_LOG_SHEET_TITLE]
+    else:
+        worksheet = spreadsheet.add_worksheet(title=CHANGE_LOG_SHEET_TITLE, rows=500, cols=len(CHANGE_LOG_HEADERS))
+
+    values = worksheet.get_all_values()
+    if not values:
+        worksheet.update([CHANGE_LOG_HEADERS])
+    elif values[0] != CHANGE_LOG_HEADERS:
+        # If the user manually created a blank or differently structured tab, keep
+        # the existing rows but place the expected audit headers at the top.
+        worksheet.insert_row(CHANGE_LOG_HEADERS, 1)
+
+    return worksheet
+
+
+def append_change_log_entries(spreadsheet, entries):
+    if not entries:
+        return 0
+
+    if isinstance(entries, dict):
+        entries = [entries]
+
+    worksheet = ensure_change_log_sheet(spreadsheet)
+    worksheet.append_rows([change_log_row(entry) for entry in entries], value_input_option="USER_ENTERED")
+    return len(entries)
+
+
 def get_sheets_config():
     if not GOOGLE_SHEETS_CONFIG_FILE.exists():
         return None
@@ -602,13 +677,14 @@ def ensure_data_bootstrapped_from_google_sheets(force=False):
         SHEETS_BOOTSTRAP_IN_PROGRESS = False
 
 
-def sync_google_sheets():
+def sync_google_sheets(log_entries=None):
     """
     Optional sync.
 
     This rewrites the Google Sheet to match the local data exactly:
     - Creates one worksheet/tab per event
     - Adds one Index worksheet
+    - Creates/preserves one Change Log worksheet
     - Removes old event worksheets that no longer correspond to current events
     - Writes current guest rows for each event
     """
@@ -626,6 +702,7 @@ def sync_google_sheets():
     index_title = config.get("index_sheet_name", "Event Index")
     protected_tabs = set(config.get("protected_tabs", []))
     protected_tabs.add(index_title)
+    protected_tabs.add(CHANGE_LOG_SHEET_TITLE)
 
     event_sheet_titles = {}
     used_titles = set(protected_tabs)
@@ -643,6 +720,8 @@ def sync_google_sheets():
         used_titles.add(title)
         event_sheet_titles[event["id"]] = title
 
+    existing_worksheets = {worksheet.title: worksheet for worksheet in spreadsheet.worksheets()}
+    ensure_change_log_sheet(spreadsheet, existing_worksheets)
     existing_worksheets = {worksheet.title: worksheet for worksheet in spreadsheet.worksheets()}
 
     if index_title in existing_worksheets:
@@ -710,12 +789,14 @@ def sync_google_sheets():
 
         worksheet.update(rows)
 
-    return {"enabled": True, "message": "Google Sheets synced successfully."}
+    appended_log_rows = append_change_log_entries(spreadsheet, log_entries)
+
+    return {"enabled": True, "message": "Google Sheets synced successfully.", "changeLogRowsAdded": appended_log_rows}
 
 
-def save_and_sync(data):
+def save_and_sync(data, log_entry=None):
     save_data(data)
-    return sync_google_sheets()
+    return sync_google_sheets(log_entry)
 
 
 @app.before_request
@@ -969,7 +1050,12 @@ def create_event():
     }
 
     data["events"].append(new_event)
-    sync_result = save_and_sync(data)
+    log_entry = build_change_log_entry(
+        "Event Created",
+        event_name=new_event["name"],
+        details=f'DJs: {", ".join(new_event["djs"])}'
+    )
+    sync_result = save_and_sync(data, log_entry)
 
     return jsonify({"event": new_event, "sync": sync_result}), 201
 
@@ -994,7 +1080,13 @@ def add_dj_to_event(event_id):
         return jsonify({"error": "That DJ is already listed for this event."}), 400
 
     event["djs"].append(dj_name)
-    sync_result = save_and_sync(data)
+    log_entry = build_change_log_entry(
+        "DJ Added To Event",
+        event_name=event.get("name", ""),
+        role=dj_name,
+        details=f"DJ added: {dj_name}"
+    )
+    sync_result = save_and_sync(data, log_entry)
 
     return jsonify({"event": event, "sync": sync_result})
 
@@ -1004,6 +1096,7 @@ def delete_event(event_id):
     data = load_data()
 
     original_event_count = len(data["events"])
+    original_guest_count = len(data["guests"])
     event_to_delete = next((event for event in data["events"] if event["id"] == event_id), None)
 
     data["events"] = [event for event in data["events"] if event["id"] != event_id]
@@ -1012,7 +1105,12 @@ def delete_event(event_id):
     if len(data["events"]) == original_event_count:
         return jsonify({"error": "Event not found."}), 404
 
-    sync_result = save_and_sync(data)
+    log_entry = build_change_log_entry(
+        "Event Deleted",
+        event_name=event_to_delete["name"] if event_to_delete else "",
+        details=f"Deleted event and removed {original_guest_count - len(data['guests'])} linked guest(s)."
+    )
+    sync_result = save_and_sync(data, log_entry)
 
     return jsonify({
         "success": True,
@@ -1152,7 +1250,14 @@ def create_guest():
 
     sms_result = send_guest_confirmation_sms(new_guest)
     data["guests"].append(new_guest)
-    sync_result = save_and_sync(data)
+    log_entry = build_change_log_entry(
+        "Guest Added",
+        event_name=new_guest.get("eventName", ""),
+        guest_name=full_guest_name(new_guest),
+        role=guest_role(new_guest),
+        details=f"Friends: {new_guest.get('friends', 0)}"
+    )
+    sync_result = save_and_sync(data, log_entry)
 
     return jsonify({"guest": new_guest, "sync": sync_result, "sms": sms_result}), 201
 
@@ -1239,7 +1344,14 @@ def import_guests():
     if not imported_guests and skipped_rows:
         return jsonify({"error": "No guests were imported.", "skippedRows": skipped_rows}), 400
 
-    sync_result = save_and_sync(data) if imported_guests else sync_google_sheets()
+    if imported_guests:
+        log_entry = build_change_log_entry(
+            "Guests Imported",
+            details=f"Imported {len(imported_guests)} guest(s); skipped {len(skipped_rows)} row(s)."
+        )
+        sync_result = save_and_sync(data, log_entry)
+    else:
+        sync_result = sync_google_sheets()
 
     return jsonify({
         "imported": len(imported_guests),
@@ -1262,7 +1374,14 @@ def check_in_guest(guest_id):
 
     guest["checkedIn"] = True
     guest["lastEditedBy"] = get_current_member_name()
-    sync_result = save_and_sync(data)
+    log_entry = build_change_log_entry(
+        "Guest Checked In",
+        event_name=guest.get("eventName", "") or event_name_by_id(data, guest.get("eventId", "")),
+        guest_name=full_guest_name(guest),
+        role=guest_role(guest),
+        user=guest.get("lastEditedBy", "")
+    )
+    sync_result = save_and_sync(data, log_entry)
 
     return jsonify({"guest": guest, "sync": sync_result})
 
@@ -1278,7 +1397,14 @@ def uncheck_guest(guest_id):
 
     guest["checkedIn"] = False
     guest["lastEditedBy"] = get_current_member_name()
-    sync_result = save_and_sync(data)
+    log_entry = build_change_log_entry(
+        "Guest Unchecked",
+        event_name=guest.get("eventName", "") or event_name_by_id(data, guest.get("eventId", "")),
+        guest_name=full_guest_name(guest),
+        role=guest_role(guest),
+        user=guest.get("lastEditedBy", "")
+    )
+    sync_result = save_and_sync(data, log_entry)
 
     return jsonify({"guest": guest, "sync": sync_result})
 
@@ -1288,12 +1414,19 @@ def remove_guest(guest_id):
     data = load_data()
 
     original_guest_count = len(data["guests"])
+    guest_to_delete = next((guest for guest in data["guests"] if guest["id"] == guest_id), None)
     data["guests"] = [guest for guest in data["guests"] if guest["id"] != guest_id]
 
     if len(data["guests"]) == original_guest_count:
         return jsonify({"error": "Guest not found."}), 404
 
-    sync_result = save_and_sync(data)
+    log_entry = build_change_log_entry(
+        "Guest Deleted",
+        event_name=(guest_to_delete.get("eventName", "") or event_name_by_id(data, guest_to_delete.get("eventId", ""))) if guest_to_delete else "",
+        guest_name=full_guest_name(guest_to_delete) if guest_to_delete else "",
+        role=guest_role(guest_to_delete) if guest_to_delete else "",
+    )
+    sync_result = save_and_sync(data, log_entry)
 
     return jsonify({"success": True, "removedGuestId": guest_id, "sync": sync_result})
 
@@ -1328,7 +1461,15 @@ def receive_sms_reply():
         send_sms_message(guest.get("phone", ""), "Please reply Y to confirm attendance or N to cancel.")
         return Response("<Response></Response>", mimetype="application/xml")
 
-    save_and_sync(data)
+    log_entry = build_change_log_entry(
+        "Guest Confirmed By SMS" if reply == "Y" else "Guest Cancelled By SMS",
+        event_name=guest.get("eventName", "") or event_name_by_id(data, guest.get("eventId", "")),
+        guest_name=full_guest_name(guest),
+        role=guest_role(guest),
+        user="SMS Reply",
+        details=f"Reply: {reply}"
+    )
+    save_and_sync(data, log_entry)
     return Response("<Response></Response>", mimetype="application/xml")
 
 
