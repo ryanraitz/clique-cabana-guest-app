@@ -36,6 +36,7 @@ import csv
 import io
 import json
 import os
+import hashlib
 import re
 import secrets
 import smtplib
@@ -52,6 +53,8 @@ GOOGLE_SHEETS_CONFIG_FILE = Path("google_sheets_config.json")
 SERVICE_ACCOUNT_FILE = Path("service_account.json")
 TEAM_MEMBERS_FILE = Path("team_members.txt")
 AUTH_DB_FILE = Path("auth.sqlite3")
+SHEETS_BOOTSTRAPPED = False
+SHEETS_BOOTSTRAP_IN_PROGRESS = False
 PIN_TOKEN_HOURS = 1
 TWILIO_ACCOUNT_SID = os.environ.get("TWILIO_ACCOUNT_SID", "").strip()
 TWILIO_AUTH_TOKEN = os.environ.get("TWILIO_AUTH_TOKEN", "").strip()
@@ -388,7 +391,16 @@ def normalize_data(data):
     return data
 
 
-def load_data():
+def stable_id(prefix, *parts):
+    raw = "|".join(str(part or "").strip().lower() for part in parts)
+    digest = hashlib.sha1(raw.encode("utf-8")).hexdigest()[:12]
+    return f"{prefix}_{digest}"
+
+
+def load_data(skip_google_bootstrap=False):
+    if not skip_google_bootstrap:
+        ensure_data_bootstrapped_from_google_sheets()
+
     if not DATA_FILE.exists():
         save_data(default_data())
     with DATA_FILE.open("r", encoding="utf-8") as file:
@@ -429,6 +441,167 @@ def get_sheets_config():
     return config
 
 
+def get_google_spreadsheet(config):
+    try:
+        import gspread
+        from google.oauth2.service_account import Credentials
+    except ImportError:
+        return None, "Google Sheets packages are not installed. Run: python -m pip install -r requirements.txt"
+
+    scopes = ["https://www.googleapis.com/auth/spreadsheets"]
+    credentials = Credentials.from_service_account_file(str(SERVICE_ACCOUNT_FILE), scopes=scopes)
+    client = gspread.authorize(credentials)
+    return client.open_by_key(config["spreadsheet_id"]), ""
+
+
+def truthy_cell(value):
+    cleaned = str(value or "").strip().lower()
+    return cleaned in {"1", "true", "yes", "y", "checked", "checked in"}
+
+
+def sheet_cell(row, index, default=""):
+    return row[index].strip() if len(row) > index and row[index] is not None else default
+
+
+def import_data_from_google_sheets():
+    """Read the linked Google Sheet and rebuild local app data from its current tabs."""
+    config = get_sheets_config()
+    if not config:
+        return {"enabled": False, "imported": False, "message": "Google Sheets sync is not configured."}
+
+    spreadsheet, error = get_google_spreadsheet(config)
+    if error:
+        return {"enabled": False, "imported": False, "message": error}
+
+    index_title = config.get("index_sheet_name", "Event Index")
+
+    try:
+        index_sheet = spreadsheet.worksheet(index_title)
+        index_rows = index_sheet.get_all_values()
+    except Exception as error:
+        return {"enabled": True, "imported": False, "message": f"Could not read {index_title}: {error}"}
+
+    if len(index_rows) < 2:
+        return {"enabled": True, "imported": False, "message": f"{index_title} has no event rows to import."}
+
+    events = []
+    guests = []
+    used_event_ids = set()
+
+    for index_row_number, row in enumerate(index_rows[1:], start=2):
+        event_name = sheet_cell(row, 0)
+        if not event_name:
+            continue
+
+        djs = [dj.strip() for dj in sheet_cell(row, 1).split(",") if dj.strip()]
+        tab_title = sheet_cell(row, 5) or slugify_sheet_title(event_name)
+        event_id = stable_id("event", event_name, tab_title)
+        counter = 2
+        base_event_id = event_id
+        while event_id in used_event_ids:
+            event_id = f"{base_event_id}_{counter}"
+            counter += 1
+        used_event_ids.add(event_id)
+
+        event = {
+            "id": event_id,
+            "name": event_name,
+            "djs": djs,
+            "teamMembers": []
+        }
+        events.append(event)
+
+        try:
+            event_sheet = spreadsheet.worksheet(tab_title)
+            event_rows = event_sheet.get_all_values()
+        except Exception:
+            continue
+
+        for guest_row_number, guest_row in enumerate(event_rows[1:], start=2):
+            guest_name = sheet_cell(guest_row, 0)
+            if not guest_name:
+                continue
+
+            name_parts = guest_name.split()
+            first_name = name_parts[0] if name_parts else ""
+            last_name = " ".join(name_parts[1:]) if len(name_parts) > 1 else ""
+            phone = sheet_cell(guest_row, 1)
+            email = sheet_cell(guest_row, 2)
+            friends_raw = sheet_cell(guest_row, 3)
+            role_value = sheet_cell(guest_row, 4)
+            text_value = sheet_cell(guest_row, 5) or "Pending"
+            user_value = sheet_cell(guest_row, 6)
+            checked_in = truthy_cell(sheet_cell(guest_row, 7)) or text_value.strip().upper() == "Y"
+
+            try:
+                friends = parse_friends_count(friends_raw) if friends_raw else 0
+            except ValueError:
+                friends = 0
+
+            selected_dj = role_value if role_value in djs else ""
+            selected_team_member = "" if selected_dj else role_value
+
+            guests.append({
+                "id": stable_id("guest", event_id, guest_row_number, guest_name, phone, email),
+                "firstName": first_name,
+                "lastName": last_name,
+                "phone": phone,
+                "email": email,
+                "friends": friends,
+                "eventId": event_id,
+                "eventName": event_name,
+                "dj": selected_dj,
+                "teamMember": selected_team_member,
+                "text": text_value,
+                "smsConfirmationSent": False,
+                "smsConfirmationSentAt": "",
+                "smsConfirmationStatus": "",
+                "checkedIn": checked_in,
+                "createdBy": user_value,
+                "lastEditedBy": user_value
+            })
+
+    imported_data = normalize_data({"events": events, "guests": guests})
+    save_data(imported_data)
+
+    return {
+        "enabled": True,
+        "imported": True,
+        "message": "Local data was rebuilt from Google Sheets.",
+        "events": len(events),
+        "guests": len(guests)
+    }
+
+
+def ensure_data_bootstrapped_from_google_sheets(force=False):
+    """Pull Sheet data once per process so Render restarts recover from the linked Sheet."""
+    global SHEETS_BOOTSTRAPPED, SHEETS_BOOTSTRAP_IN_PROGRESS
+
+    if SHEETS_BOOTSTRAPPED and not force:
+        return None
+
+    if SHEETS_BOOTSTRAP_IN_PROGRESS:
+        return None
+
+    config = get_sheets_config()
+    if not config:
+        SHEETS_BOOTSTRAPPED = True
+        return None
+
+    SHEETS_BOOTSTRAP_IN_PROGRESS = True
+    try:
+        result = import_data_from_google_sheets()
+        print(f"Google Sheets startup import: {result.get('message')}")
+        SHEETS_BOOTSTRAPPED = True
+        return result
+    except Exception as error:
+        print(f"Google Sheets startup import failed: {error}")
+        SHEETS_BOOTSTRAPPED = True
+        return {"enabled": True, "imported": False, "message": str(error)}
+    finally:
+        SHEETS_BOOTSTRAP_IN_PROGRESS = False
+
+
 def sync_google_sheets():
     """
     Optional sync.
@@ -444,21 +617,11 @@ def sync_google_sheets():
     if not config:
         return {"enabled": False, "message": "Google Sheets sync is not configured."}
 
-    try:
-        import gspread
-        from google.oauth2.service_account import Credentials
-    except ImportError:
-        return {
-            "enabled": False,
-            "message": "Google Sheets packages are not installed. Run: python -m pip install -r requirements.txt"
-        }
+    spreadsheet, error = get_google_spreadsheet(config)
+    if error:
+        return {"enabled": False, "message": error}
 
-    scopes = ["https://www.googleapis.com/auth/spreadsheets"]
-    credentials = Credentials.from_service_account_file(str(SERVICE_ACCOUNT_FILE), scopes=scopes)
-    client = gspread.authorize(credentials)
-
-    spreadsheet = client.open_by_key(config["spreadsheet_id"])
-    data = load_data()
+    data = load_data(skip_google_bootstrap=True)
 
     index_title = config.get("index_sheet_name", "Event Index")
     protected_tabs = set(config.get("protected_tabs", []))
@@ -756,8 +919,15 @@ def login_with_pin():
 
 @app.route("/api/sync-status", methods=["GET"])
 def sync_status():
+    ensure_data_bootstrapped_from_google_sheets()
     result = sync_google_sheets()
     return jsonify(result)
+
+
+@app.route("/api/import-from-google-sheets", methods=["POST"])
+def import_from_google_sheets_route():
+    result = ensure_data_bootstrapped_from_google_sheets(force=True)
+    return jsonify(result or {"enabled": False, "imported": False, "message": "Google Sheets import did not run."})
 
 
 @app.route("/api/events", methods=["GET"])
@@ -1163,6 +1333,7 @@ def receive_sms_reply():
 
 
 init_auth_db()
+ensure_data_bootstrapped_from_google_sheets()
 
 
 if __name__ == "__main__":
