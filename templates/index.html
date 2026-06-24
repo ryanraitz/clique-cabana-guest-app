@@ -3803,6 +3803,365 @@
         width: 100%;
       }
     }
+
+
+    /* RESPONSIVE HEADER + HERO LOCK: clean desktop/mobile layout */
+    .page {
+      width: 100% !important;
+      max-width: 1180px !important;
+      margin: 0 auto !important;
+      padding: clamp(14px, 2.4vw, 28px) clamp(12px, 2vw, 20px) 70px !important;
+    }
+
+    .brand-shell {
+      position: relative !important;
+      width: 100% !important;
+      height: auto !important;
+      min-height: 0 !important;
+      max-height: none !important;
+      overflow: hidden !important;
+      padding: clamp(18px, 3vw, 34px) !important;
+      border-radius: clamp(24px, 3vw, 38px) !important;
+    }
+
+    .brand-shell .top-bar {
+      position: relative !important;
+      top: auto !important;
+      left: auto !important;
+      right: auto !important;
+      height: auto !important;
+      min-height: 0 !important;
+      display: flex !important;
+      align-items: flex-start !important;
+      justify-content: space-between !important;
+      gap: 16px !important;
+      margin: 0 0 clamp(18px, 2.8vw, 34px) 0 !important;
+      padding: 0 !important;
+      z-index: 10 !important;
+    }
+
+    .brand-shell .brand-mark.brand-mark-graphic {
+      position: relative !important;
+      top: auto !important;
+      left: auto !important;
+      z-index: 12 !important;
+      flex: 0 0 auto !important;
+      display: block !important;
+      line-height: 0 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+
+    .brand-shell .brand-mark.brand-mark-graphic .top-wordmark-image {
+      display: block !important;
+      width: clamp(82px, 9vw, 122px) !important;
+      max-width: none !important;
+      height: auto !important;
+      object-fit: contain !important;
+    }
+
+    .brand-shell .top-actions {
+      position: relative !important;
+      top: auto !important;
+      right: auto !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: flex-end !important;
+      gap: 10px !important;
+      flex-wrap: wrap !important;
+      min-width: 0 !important;
+      z-index: 12 !important;
+    }
+
+    .brand-shell .auth-chip,
+    .brand-shell .logout-form .button,
+    .brand-shell .logout-form .button.secondary {
+      height: 42px !important;
+      min-height: 42px !important;
+      padding: 0 16px !important;
+      font-size: 12px !important;
+      line-height: 1 !important;
+      letter-spacing: 0.10em !important;
+      border-radius: 999px !important;
+      white-space: nowrap !important;
+    }
+
+    .brand-shell .logout-form {
+      margin: 0 !important;
+      padding: 0 !important;
+      border: 0 !important;
+      background: transparent !important;
+      max-width: none !important;
+      width: auto !important;
+    }
+
+    .brand-shell .hero.brand-primary-hero {
+      position: relative !important;
+      inset: auto !important;
+      display: grid !important;
+      grid-template-columns: minmax(0, 1.12fr) minmax(300px, 0.88fr) !important;
+      align-items: center !important;
+      gap: clamp(20px, 4vw, 58px) !important;
+      height: auto !important;
+      min-height: 0 !important;
+      overflow: visible !important;
+      isolation: isolate !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+
+    .brand-shell .hero.brand-primary-hero::before,
+    .brand-shell .hero.brand-primary-hero::after {
+      display: none !important;
+      content: none !important;
+    }
+
+    .brand-shell .hero.brand-primary-hero > img.wordmark.brand-primary-logo,
+    .brand-shell .wordmark.brand-primary-logo,
+    .hero.brand-primary-hero > img.wordmark.brand-primary-logo {
+      content: url("/static/clique-cabana-blue-wave-logo.png") !important;
+      position: relative !important;
+      left: auto !important;
+      top: auto !important;
+      grid-column: 1 !important;
+      grid-row: 1 !important;
+      justify-self: stretch !important;
+      align-self: center !important;
+      width: 100% !important;
+      max-width: 720px !important;
+      max-height: 360px !important;
+      height: auto !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      background: transparent !important;
+      box-shadow: none !important;
+      object-fit: contain !important;
+      object-position: center left !important;
+      transform: none !important;
+      opacity: 0.98 !important;
+      z-index: 1 !important;
+      pointer-events: none !important;
+      mix-blend-mode: screen !important;
+      -webkit-mask-image: none !important;
+      mask-image: none !important;
+      filter: drop-shadow(0 0 36px rgba(76, 230, 242, 0.24)) drop-shadow(0 18px 48px rgba(0, 0, 0, 0.58)) !important;
+    }
+
+    .brand-shell .hero.brand-primary-hero > .page-purpose,
+    .brand-shell .brand-primary-hero .page-purpose,
+    .hero.brand-primary-hero > .page-purpose {
+      position: relative !important;
+      top: auto !important;
+      right: auto !important;
+      grid-column: 2 !important;
+      grid-row: 1 !important;
+      justify-self: end !important;
+      width: auto !important;
+      max-width: 430px !important;
+      padding: clamp(16px, 2vw, 22px) !important;
+      margin: 0 !important;
+      border: 0 !important;
+      border-radius: 24px !important;
+      background: linear-gradient(135deg, rgba(2, 8, 10, 0.66), rgba(2, 8, 10, 0.30)) !important;
+      box-shadow: 0 18px 58px rgba(0,0,0,0.24) !important;
+      backdrop-filter: blur(4px) !important;
+      text-align: left !important;
+      z-index: 3 !important;
+    }
+
+    .brand-shell .hero.brand-primary-hero > .page-purpose::before,
+    .brand-shell .brand-primary-hero .page-purpose::before,
+    .hero.brand-primary-hero > .page-purpose::before {
+      display: none !important;
+      content: none !important;
+    }
+
+    .brand-primary-hero .page-purpose .eyebrow {
+      margin: 0 0 14px !important;
+      font-size: clamp(11px, 1vw, 13px) !important;
+      letter-spacing: 0.14em !important;
+      line-height: 1.2 !important;
+      color: #48efff !important;
+    }
+
+    .brand-primary-hero .page-purpose h1 {
+      margin: 0 0 14px !important;
+      font-size: clamp(42px, 5.4vw, 70px) !important;
+      line-height: 0.92 !important;
+      letter-spacing: -0.04em !important;
+      text-transform: none !important;
+      color: #fffaf3 !important;
+    }
+
+    .brand-primary-hero .page-purpose .hero-note {
+      margin: 0 !important;
+      max-width: 40ch !important;
+      font-size: clamp(14px, 1.35vw, 17px) !important;
+      line-height: 1.55 !important;
+      color: rgba(255, 248, 240, 0.82) !important;
+    }
+
+    .tabs {
+      max-width: 1180px !important;
+      margin-left: auto !important;
+      margin-right: auto !important;
+    }
+
+    @media (max-width: 760px) {
+      .page {
+        padding: 12px 10px 48px !important;
+      }
+
+      .brand-shell {
+        padding: 14px !important;
+        border-radius: 24px !important;
+      }
+
+      .brand-shell .top-bar {
+        display: grid !important;
+        grid-template-columns: auto minmax(0, 1fr) !important;
+        align-items: start !important;
+        gap: 10px !important;
+        margin-bottom: 18px !important;
+      }
+
+      .brand-shell .brand-mark.brand-mark-graphic .top-wordmark-image {
+        width: clamp(70px, 20vw, 94px) !important;
+      }
+
+      .brand-shell .top-actions {
+        justify-content: flex-end !important;
+        align-items: center !important;
+        gap: 8px !important;
+      }
+
+      .brand-shell .auth-chip {
+        height: 34px !important;
+        min-height: 34px !important;
+        max-width: 100% !important;
+        padding: 0 10px !important;
+        font-size: 9px !important;
+        letter-spacing: 0.08em !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+      }
+
+      .brand-shell .logout-form .button,
+      .brand-shell .logout-form .button.secondary {
+        height: 36px !important;
+        min-height: 36px !important;
+        min-width: 86px !important;
+        padding: 0 12px !important;
+        font-size: 11px !important;
+        letter-spacing: 0.08em !important;
+      }
+
+      .brand-shell .hero.brand-primary-hero {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        gap: 14px !important;
+        overflow: hidden !important;
+      }
+
+      .brand-shell .hero.brand-primary-hero > img.wordmark.brand-primary-logo,
+      .brand-shell .wordmark.brand-primary-logo,
+      .hero.brand-primary-hero > img.wordmark.brand-primary-logo {
+        grid-column: 1 !important;
+        grid-row: 1 !important;
+        justify-self: center !important;
+        width: min(100%, 430px) !important;
+        max-width: 100% !important;
+        max-height: 210px !important;
+        object-position: center !important;
+      }
+
+      .brand-shell .hero.brand-primary-hero > .page-purpose,
+      .brand-shell .brand-primary-hero .page-purpose,
+      .hero.brand-primary-hero > .page-purpose {
+        grid-column: 1 !important;
+        grid-row: 2 !important;
+        justify-self: stretch !important;
+        max-width: none !important;
+        width: 100% !important;
+        padding: 14px !important;
+        text-align: center !important;
+        border-radius: 18px !important;
+      }
+
+      .brand-primary-hero .page-purpose .eyebrow {
+        justify-content: center !important;
+        gap: 8px !important;
+        margin-bottom: 10px !important;
+        font-size: 10px !important;
+        letter-spacing: 0.10em !important;
+      }
+
+      .brand-primary-hero .page-purpose .eyebrow::before {
+        width: 22px !important;
+      }
+
+      .brand-primary-hero .page-purpose h1 {
+        font-size: clamp(32px, 10vw, 44px) !important;
+        line-height: 0.96 !important;
+        margin-bottom: 10px !important;
+      }
+
+      .brand-primary-hero .page-purpose .hero-note {
+        max-width: none !important;
+        font-size: 13px !important;
+        line-height: 1.5 !important;
+      }
+
+      .tabs {
+        grid-template-columns: 1fr !important;
+        height: auto !important;
+        gap: 8px !important;
+        padding: 8px !important;
+        margin: 14px 0 !important;
+        border-radius: 18px !important;
+      }
+
+      .tab-button {
+        height: 46px !important;
+        padding: 0 12px !important;
+        border-radius: 14px !important;
+        font-size: 12px !important;
+        letter-spacing: 0.10em !important;
+      }
+    }
+
+    @media (min-width: 761px) and (max-width: 1000px) {
+      .brand-shell .hero.brand-primary-hero {
+        grid-template-columns: 1fr !important;
+        gap: 20px !important;
+      }
+
+      .brand-shell .hero.brand-primary-hero > img.wordmark.brand-primary-logo,
+      .brand-shell .wordmark.brand-primary-logo,
+      .hero.brand-primary-hero > img.wordmark.brand-primary-logo {
+        grid-column: 1 !important;
+        grid-row: 1 !important;
+        justify-self: center !important;
+        object-position: center !important;
+      }
+
+      .brand-shell .hero.brand-primary-hero > .page-purpose,
+      .brand-shell .brand-primary-hero .page-purpose,
+      .hero.brand-primary-hero > .page-purpose {
+        grid-column: 1 !important;
+        grid-row: 2 !important;
+        justify-self: center !important;
+        text-align: center !important;
+        max-width: 640px !important;
+      }
+
+      .brand-primary-hero .page-purpose .eyebrow {
+        justify-content: center !important;
+      }
+    }
+
 </style>
 </head>
 
