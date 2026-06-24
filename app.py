@@ -522,16 +522,17 @@ def sync_google_sheets():
             worksheet = existing_worksheets[title]
             worksheet.clear()
         else:
-            worksheet = spreadsheet.add_worksheet(title=title, rows=200, cols=7)
+            worksheet = spreadsheet.add_worksheet(title=title, rows=200, cols=9)
 
         event_guests = [guest for guest in data["guests"] if guest["eventId"] == event["id"]]
 
         rows = [
-            ["Guest", "Phone", "Email", "Friends", "DJ / Team Member", "Text", "User"],
+            ["Guest", "Phone", "Email", "Friends", "DJ / Team Member", "Text", "User", "Checked In", "Not Checked In"],
         ]
 
         for guest in event_guests:
             guest_name = f'{guest.get("firstName", "")} {guest.get("lastName", "")}'.strip()
+            is_checked_in = bool(guest.get("checkedIn"))
             rows.append([
                 guest_name,
                 guest.get("phone", ""),
@@ -539,7 +540,9 @@ def sync_google_sheets():
                 guest.get("friends", "") if int(guest.get("friends") or 0) >= 1 else "",
                 guest.get("teamMember", "") or guest.get("dj", ""),
                 guest.get("text", "Pending"),
-                guest.get("lastEditedBy", "") or guest.get("createdBy", "")
+                guest.get("lastEditedBy", "") or guest.get("createdBy", ""),
+                1 if is_checked_in else 0,
+                0 if is_checked_in else 1
             ])
 
         worksheet.update(rows)
