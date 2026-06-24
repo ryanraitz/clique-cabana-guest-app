@@ -44,6 +44,7 @@ import sqlite3
 import uuid
 from datetime import datetime, timedelta, timezone
 from email.message import EmailMessage
+from zoneinfo import ZoneInfo
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-change-this-secret-key")
@@ -55,6 +56,8 @@ TEAM_MEMBERS_FILE = Path(os.environ.get("TEAM_MEMBERS_FILE", "team_members.txt")
 AUTH_DB_FILE = Path(os.environ.get("AUTH_DB_FILE", "auth.sqlite3"))
 CHANGE_LOG_SHEET_TITLE = "Change Log"
 CHANGE_LOG_HEADERS = ["Timestamp", "Action", "Event", "Guest", "DJ / Team Member", "Team Member/User", "Details"]
+CHANGE_LOG_TIMEZONE = ZoneInfo("America/New_York")
+CHANGE_LOG_TIMESTAMP_FORMAT = "%B %-d, %Y at %-I:%M:%S %p %Z"
 SHEETS_BOOTSTRAPPED = False
 SHEETS_BOOTSTRAP_IN_PROGRESS = False
 PIN_TOKEN_HOURS = 1
@@ -437,9 +440,20 @@ def event_name_by_id(data, event_id):
     return event.get("name", "") if event else ""
 
 
+
+def readable_eastern_timestamp():
+    """Return a normal, readable Eastern Time timestamp for Google Sheets audit logs."""
+    now = datetime.now(CHANGE_LOG_TIMEZONE)
+
+    try:
+        return now.strftime(CHANGE_LOG_TIMESTAMP_FORMAT)
+    except ValueError:
+        # Windows does not support %-d / %-I, so this keeps the same readable format.
+        return now.strftime("%B %d, %Y at %I:%M:%S %p %Z").replace(" 0", " ")
+
 def build_change_log_entry(action, event_name="", guest_name="", role="", user="", details=""):
     return {
-        "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
+        "timestamp": readable_eastern_timestamp(),
         "action": action,
         "event": event_name or "",
         "guest": guest_name or "",
