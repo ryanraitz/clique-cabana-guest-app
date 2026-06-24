@@ -1704,6 +1704,26 @@
   }
 }
 
+
+.forgot-pin-button {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--teal);
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  margin: -6px 0 8px;
+  padding: 0;
+  text-transform: uppercase;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.forgot-pin-button:hover { color: var(--ink); }
+
 </style>
 </head>
 <body>
@@ -1774,6 +1794,8 @@
           <input id="loginPin" type="password" inputmode="numeric" autocomplete="current-password" placeholder="4–8 digit PIN" required />
         </label>
 
+        <button id="forgotPinLink" class="forgot-pin-button" type="button">Forgot password?</button>
+
         <div class="form-footer">
           <button class="button" type="submit">Enter Dashboard</button>
           <div class="tiny-note">Access is limited to approved team members.</div>
@@ -1788,11 +1810,15 @@
           Team Member
           <select id="setupName" required>
             <option value="">Select your name</option>
-            {% for member in team_members %}
+            {% for member in setup_team_members %}
               <option value="{{ member }}">{{ member }}</option>
             {% endfor %}
           </select>
         </label>
+
+        {% if not setup_team_members %}
+          <p class="tiny-note">All listed team members already have active PINs. Use Forgot Password from the login form to reset an existing PIN.</p>
+        {% endif %}
 
         <label>
           Email Address
@@ -1847,6 +1873,35 @@
           pin: document.getElementById("loginPin").value
         });
         window.location.href = result.redirectUrl;
+      } catch (error) {
+        message.classList.add("error");
+        message.textContent = error.message;
+      }
+    });
+
+    document.getElementById("forgotPinLink").addEventListener("click", async () => {
+      const message = document.getElementById("loginMessage");
+      const name = document.getElementById("loginName").value;
+      message.classList.remove("error");
+      message.textContent = "";
+
+      if (!name) {
+        message.classList.add("error");
+        message.textContent = "Select your team member name first, then click Forgot password.";
+        return;
+      }
+
+      try {
+        const result = await authRequest("/api/auth/request-pin-setup", {
+          name,
+          purpose: "reset"
+        });
+
+        message.textContent = result.message;
+
+        if (result.email && result.email.setupUrl) {
+          message.innerHTML = `${result.message}<br><br><strong>Local dev mode:</strong> SMTP is not configured, so use this test link: <a class="dev-link" href="${result.email.setupUrl}">Create New PIN</a>`;
+        }
       } catch (error) {
         message.classList.add("error");
         message.textContent = error.message;
