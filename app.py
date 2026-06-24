@@ -43,8 +43,8 @@ import smtplib
 import sqlite3
 import uuid
 from datetime import datetime, timedelta, timezone
-from email.message import EmailMessage
 from zoneinfo import ZoneInfo
+from email.message import EmailMessage
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-change-this-secret-key")
@@ -56,8 +56,6 @@ TEAM_MEMBERS_FILE = Path(os.environ.get("TEAM_MEMBERS_FILE", "team_members.txt")
 AUTH_DB_FILE = Path(os.environ.get("AUTH_DB_FILE", "auth.sqlite3"))
 CHANGE_LOG_SHEET_TITLE = "Change Log"
 CHANGE_LOG_HEADERS = ["Timestamp", "Action", "Event", "Guest", "DJ / Team Member", "Team Member/User", "Details"]
-CHANGE_LOG_TIMEZONE = ZoneInfo("America/New_York")
-CHANGE_LOG_TIMESTAMP_FORMAT = "%B %-d, %Y at %-I:%M:%S %p %Z"
 SHEETS_BOOTSTRAPPED = False
 SHEETS_BOOTSTRAP_IN_PROGRESS = False
 PIN_TOKEN_HOURS = 1
@@ -71,6 +69,15 @@ SMS_N_REPLY_MESSAGE = "Sorry to hear you can’t make it. We’re disappointed t
 
 def utc_now_iso():
     return datetime.now(timezone.utc).isoformat()
+
+
+def eastern_now_readable():
+    """Return a normal readable timestamp in Eastern Time for Google Sheets audit rows."""
+    eastern_now = datetime.now(ZoneInfo("America/New_York"))
+    # Example: June 24, 2026 at 8:15:30 AM EDT
+    month = eastern_now.strftime("%B")
+    hour = eastern_now.strftime("%I").lstrip("0") or "12"
+    return f"{month} {eastern_now.day}, {eastern_now.year} at {hour}:{eastern_now:%M:%S %p %Z}"
 
 
 def default_team_member_records():
@@ -440,20 +447,9 @@ def event_name_by_id(data, event_id):
     return event.get("name", "") if event else ""
 
 
-
-def readable_eastern_timestamp():
-    """Return a normal, readable Eastern Time timestamp for Google Sheets audit logs."""
-    now = datetime.now(CHANGE_LOG_TIMEZONE)
-
-    try:
-        return now.strftime(CHANGE_LOG_TIMESTAMP_FORMAT)
-    except ValueError:
-        # Windows does not support %-d / %-I, so this keeps the same readable format.
-        return now.strftime("%B %d, %Y at %I:%M:%S %p %Z").replace(" 0", " ")
-
 def build_change_log_entry(action, event_name="", guest_name="", role="", user="", details=""):
     return {
-        "timestamp": readable_eastern_timestamp(),
+        "timestamp": eastern_now_readable(),
         "action": action,
         "event": event_name or "",
         "guest": guest_name or "",
