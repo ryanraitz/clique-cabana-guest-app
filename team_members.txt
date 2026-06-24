@@ -1,0 +1,6 @@
+# Format: First Last,approved-email@example.com
+# PIN setup is blocked until each person's approved email is added.
+Ryan Raitz,ryanraitz96@gmail.com
+Abby Sparks,
+Ty Abbott,
+Bil Carter,

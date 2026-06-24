@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy | Clique Cabana</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #050607;
+      --panel: rgba(255,255,255,0.055);
+      --line: rgba(255,255,255,0.12);
+      --text: #f7f7f7;
+      --muted: rgba(255,255,255,0.68);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: radial-gradient(circle at top, rgba(0, 219, 255, 0.14), transparent 34%), var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.65;
+    }
+    main { width: min(980px, calc(100% - 32px)); margin: 0 auto; padding: 42px 0 64px; }
+    .brand { display:flex; align-items:center; justify-content:space-between; gap:18px; margin-bottom:28px; }
+    .brand img { width: min(260px, 70vw); height:auto; filter: drop-shadow(0 0 22px rgba(0, 219, 255, 0.16)); }
+    .back { color: var(--text); border:1px solid var(--line); border-radius:999px; padding:10px 16px; text-decoration:none; background:rgba(255,255,255,0.05); font-size:13px; text-transform:uppercase; letter-spacing:.12em; }
+    .card { border:1px solid var(--line); border-radius:26px; background:linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.035)); padding: clamp(24px, 4vw, 44px); box-shadow: 0 24px 80px rgba(0,0,0,0.35); }
+    .eyebrow { color: var(--muted); text-transform:uppercase; letter-spacing:.18em; font-size:12px; margin-bottom:10px; }
+    h1 { margin:0 0 14px; font-size: clamp(34px, 6vw, 62px); line-height:.96; letter-spacing:-.055em; }
+    h2 { margin:34px 0 8px; font-size:22px; }
+    p, li { color: var(--muted); }
+    strong { color: var(--text); }
+    ul { padding-left: 22px; }
+    .updated { margin-top: 0; color: rgba(255,255,255,0.52); font-size: 13px; }
+    .footer-actions { display:flex; gap:12px; flex-wrap:wrap; margin-top:34px; }
+    .button { color:#050607; background:#fff; border-radius:999px; padding:12px 18px; text-decoration:none; font-weight:800; text-transform:uppercase; letter-spacing:.1em; font-size:12px; }
+    .button.secondary { color:#fff; background:rgba(255,255,255,.06); border:1px solid var(--line); }
+    @media (max-width: 650px) { .brand { align-items:flex-start; flex-direction:column; } }
+</style>
+</head>
+<body>
+  <main>
+    <div class="brand">
+      <img src="/static/clique-cabana-top-wordmark-simple.png" alt="Clique Cabana" />
+      <a class="back" href="/app#add-guest">Back to Add Guest</a>
+    </div>
+    <section class="card">
+      <div class="eyebrow">Clique Cabana Guest List Manager</div>
+      <h1>Privacy Policy</h1>
+      <p class="updated">Last updated: June 23, 2026</p>
+      <p>This Privacy Policy explains how Clique Cabana collects, uses, and protects information entered into the Guest List Manager.</p>
+
+      <h2>Information We Collect</h2>
+      <p>When a team member adds a guest, the app may collect the guest’s first name, last name, phone number, email address, friend count, selected event, selected DJ or team member, SMS confirmation status, and check-in status.</p>
+
+      <h2>How We Use Information</h2>
+      <ul>
+        <li>To manage event guest lists and check-ins.</li>
+        <li>To associate guests with the correct event, DJ, or team member.</li>
+        <li>To send optional SMS attendance confirmation messages when phone numbers are provided and messaging is enabled.</li>
+        <li>To sync event and guest information to connected Google Sheets when that integration is configured.</li>
+      </ul>
+
+      <h2>Who Can Access Information</h2>
+      <p>Guest information is intended for authorized Clique Cabana team members only. Access to the dashboard is protected by the team member login/PIN system.</p>
+
+      <h2>Third-Party Services</h2>
+      <p>The app may use Google Sheets for list syncing and Twilio for SMS confirmation messaging, depending on your configuration. Those services process the information needed to provide their respective functions.</p>
+
+      <h2>Data Storage</h2>
+      <p>Local app data is stored in the project’s local data file. If Google Sheets syncing is enabled, a copy of event and guest list data may also be stored in the configured Google Sheet.</p>
+
+      <h2>Data Accuracy and Removal</h2>
+      <p>Team members should enter accurate guest information and remove outdated or incorrect entries when no longer needed for event operations.</p>
+
+      <h2>Contact</h2>
+      <p>For questions about this Privacy Policy or guest data handling, contact the Clique Cabana event/admin team.</p>
+
+      <div class="footer-actions">
+        <a class="button" href="/terms-and-conditions">Terms & Conditions</a>
+        <a class="button secondary" href="/app#add-guest">Back to Add Guest</a>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

@@ -1,0 +1,15 @@
+{
+  "events": [
+    {
+      "id": "event_001",
+      "name": "Opening Night",
+      "djs": [
+        "DJ Nova",
+        "Harny",
+        "Wave Runner"
+      ],
+      "teamMembers": []
+    }
+  ],
+  "guests": []
+}

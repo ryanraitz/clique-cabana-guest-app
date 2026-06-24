@@ -1,0 +1,6 @@
+{
+  "enabled": false,
+  "spreadsheet_id": "PASTE_YOUR_GOOGLE_SHEET_ID_HERE",
+  "index_sheet_name": "Event Index",
+  "protected_tabs": []
+}

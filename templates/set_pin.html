@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Create PIN · Clique Cabana</title>
+  <style>
+    :root {
+      --ink: #f7f3ea;
+      --muted: rgba(247, 243, 234, 0.64);
+      --soft: rgba(247, 243, 234, 0.42);
+      --line: rgba(247, 243, 234, 0.16);
+      --danger: #ff8b8b;
+      --success: #a7ffc1;
+      --shadow: 0 34px 110px rgba(0, 0, 0, 0.62);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 18% 9%, rgba(255,255,255,0.13), transparent 25%),
+        radial-gradient(circle at 82% 5%, rgba(255,255,255,0.07), transparent 24%),
+        linear-gradient(135deg, #000 0%, #060606 48%, #111112 100%);
+      color: var(--ink);
+      display: grid;
+      place-items: center;
+      padding: clamp(18px, 3vw, 34px);
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(rgba(255,255,255,0.030) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.020) 1px, transparent 1px);
+      background-size: 58px 58px;
+      mask-image: radial-gradient(circle at center, black, transparent 78%);
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      width: min(680px, 76vw);
+      height: min(900px, 96vh);
+      right: -190px;
+      bottom: -260px;
+      background: url("/static/cc-login-mark.png") center / contain no-repeat;
+      opacity: 0.11;
+      pointer-events: none;
+      transform: rotate(-7deg);
+      filter: contrast(1.06) drop-shadow(0 30px 90px rgba(255,255,255,0.08));
+    }
+
+    button, input { font: inherit; }
+
+    .card {
+      width: min(560px, 100%);
+      position: relative;
+      z-index: 1;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 34px;
+      background:
+        linear-gradient(145deg, rgba(255,255,255,0.105), rgba(255,255,255,0.028)),
+        radial-gradient(circle at 50% 6%, rgba(255,255,255,0.10), transparent 30%),
+        radial-gradient(circle at 80% 12%, rgba(255,255,255,0.10), transparent 30%);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(22px);
+      padding: clamp(24px, 4vw, 42px);
+      display: grid;
+      gap: 17px;
+      isolation: isolate;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: 1px;
+      border-radius: 33px;
+      border: 1px solid rgba(255,255,255,0.055);
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .card::after {
+      content: "";
+      position: absolute;
+      width: 220px;
+      aspect-ratio: 1;
+      right: -54px;
+      top: -54px;
+      background: url("/static/cc-login-mark.png") center / contain no-repeat;
+      opacity: 0.24;
+      z-index: -1;
+      filter: drop-shadow(0 22px 60px rgba(0,0,0,0.55));
+    }
+
+    .brand-mark {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      margin-bottom: 8px;
+    }
+
+    .brand-icon {
+      width: 50px;
+      height: 50px;
+      border: 1px solid var(--line);
+      border-radius: 17px;
+      background:
+        linear-gradient(145deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05)),
+        url("/static/cc-login-mark.png") center / 88% no-repeat;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05), 0 18px 45px rgba(0,0,0,0.28);
+      flex: 0 0 auto;
+    }
+
+    .brand-name strong {
+      display: block;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      font-size: 12px;
+      line-height: 1.2;
+    }
+
+    .brand-name span { color: var(--muted); font-size: 12px; }
+
+    .kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      font-size: 11px;
+      font-weight: 900;
+      margin-bottom: -3px;
+    }
+
+    .kicker::before {
+      content: "";
+      width: 32px;
+      height: 1px;
+      background: var(--ink);
+      opacity: 0.74;
+    }
+
+    h1 {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(46px, 8vw, 68px);
+      line-height: 0.9;
+      letter-spacing: -0.06em;
+    }
+
+    p { color: var(--muted); line-height: 1.58; margin: 0; }
+    strong { color: var(--ink); }
+
+    form { display: grid; gap: 15px; margin-top: 2px; }
+
+    label {
+      display: grid;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      font-weight: 900;
+    }
+
+    input {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,0.38);
+      color: var(--ink);
+      padding: 15px 15px;
+      border-radius: 17px;
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+    }
+
+    input::placeholder { color: rgba(247,243,234,0.34); }
+    input:focus { border-color: rgba(247,243,234,0.58); box-shadow: 0 0 0 4px rgba(247,243,234,0.075), inset 0 1px 0 rgba(255,255,255,0.05); background: rgba(0,0,0,0.48); }
+
+    .button {
+      border: 1px solid var(--ink);
+      background: var(--ink);
+      color: #050505;
+      padding: 14px 18px;
+      border-radius: 999px;
+      font-weight: 900;
+      cursor: pointer;
+      width: fit-content;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      font-size: 12px;
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+      box-shadow: 0 18px 42px rgba(0,0,0,0.26);
+    }
+
+    .button:hover { transform: translateY(-1px); box-shadow: 0 22px 55px rgba(0,0,0,0.32); }
+
+    .message { min-height: 22px; color: var(--success); font-size: 14px; line-height: 1.45; }
+    .message.error { color: var(--danger); }
+
+    .expired-panel {
+      display: grid;
+      gap: 14px;
+    }
+
+    a {
+      color: var(--ink);
+      text-underline-offset: 4px;
+      font-weight: 800;
+    }
+
+    @media (max-width: 560px) {
+      body { padding: 14px; }
+      .card { border-radius: 26px; }
+      .button { width: 100%; }
+    }
+
+
+    /* 2026 CC teal brand restyle */
+    :root {
+      --ink: #f6fbfb;
+      --muted: rgba(228,255,255,0.70);
+      --soft: rgba(83,226,231,0.48);
+      --line: rgba(83,226,231,0.24);
+      --cyan: #53e2e7;
+      --shadow: 0 34px 120px rgba(0,0,0,0.75);
+    }
+    body {
+      background:
+        radial-gradient(circle at 15% 8%, rgba(83,226,231,0.24), transparent 26%),
+        radial-gradient(circle at 82% 14%, rgba(83,226,231,0.15), transparent 30%),
+        linear-gradient(135deg, #000 0%, #020708 48%, #051315 100%);
+    }
+    body::before {
+      background:
+        linear-gradient(rgba(83,226,231,0.040) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(83,226,231,0.030) 1px, transparent 1px);
+      background-size: 46px 46px;
+      opacity: 0.55;
+    }
+    body::after {
+      width: min(760px, 82vw);
+      height: min(760px, 82vw);
+      right: -220px;
+      bottom: -220px;
+      background-image: url("/static/clique-cabana-cc-mark.png");
+      opacity: 0.15;
+      filter: drop-shadow(0 0 70px rgba(83,226,231,0.22));
+    }
+    .card {
+      border-color: rgba(83,226,231,0.30);
+      background:
+        linear-gradient(145deg, rgba(3, 25, 28, 0.90), rgba(0,0,0,0.68)),
+        radial-gradient(circle at 82% 12%, rgba(83,226,231,0.20), transparent 32%);
+      box-shadow: 0 30px 105px rgba(0,0,0,0.72), inset 0 1px 0 rgba(83,226,231,0.14);
+    }
+    .card::after { background-image: url("/static/clique-cabana-cc-mark.png"); opacity: 0.30; filter: drop-shadow(0 0 36px rgba(83,226,231,0.22)); }
+    .brand-icon {
+      border-color: rgba(83,226,231,0.36);
+      background:
+        linear-gradient(145deg, rgba(83,226,231,0.18), rgba(0,0,0,0.30)),
+        url("/static/clique-cabana-cc-mark.png") center / 84% no-repeat;
+    }
+    h1 { font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif; letter-spacing: 0.025em; text-transform: uppercase; font-weight: 900; }
+    .brand-name strong, .kicker, label { color: #dffcff; }
+    input { border-color: rgba(83,226,231,0.24); background: rgba(0,0,0,0.46); }
+    input:focus { border-color: rgba(113,247,255,0.78); box-shadow: 0 0 0 4px rgba(83,226,231,0.10); }
+    .button { background: linear-gradient(135deg, #71f7ff, #33cbd5); border-color: rgba(113,247,255,0.76); color: #001114; box-shadow: 0 18px 48px rgba(51,203,213,0.18); }
+
+
+
+    /* 2026 final teal wave/mark treatment from latest attached assets */
+    :root {
+      --cyan: #54e5eb;
+      --ink: #f7ffff;
+      --muted: rgba(226,255,255,0.72);
+      --line: rgba(84,229,235,0.30);
+    }
+    body {
+      background:
+        radial-gradient(circle at 15% 8%, rgba(84,229,235,0.26), transparent 25%),
+        radial-gradient(circle at 85% 16%, rgba(84,229,235,0.17), transparent 30%),
+        linear-gradient(135deg, #000 0%, #02090a 48%, #06181b 100%);
+    }
+    body::after {
+      background-image: url("/static/clique-cabana-cc-mark.png");
+      opacity: 0.16;
+      filter: drop-shadow(0 0 80px rgba(84,229,235,0.30));
+    }
+    .card {
+      border-color: rgba(84,229,235,0.34);
+      background:
+        linear-gradient(145deg, rgba(2, 26, 31, 0.92), rgba(0,0,0,0.70)),
+        radial-gradient(circle at 82% 12%, rgba(84,229,235,0.22), transparent 32%),
+        url("/static/clique-cabana-main-logo.png") center bottom -90px / 520px no-repeat;
+      box-shadow: 0 34px 120px rgba(0,0,0,0.76), inset 0 1px 0 rgba(84,229,235,0.16);
+    }
+    .card::after { background-image: url("/static/clique-cabana-cc-mark.png"); opacity: 0.18; filter: drop-shadow(0 0 46px rgba(84,229,235,0.26)); }
+    .brand-icon { background: linear-gradient(145deg, rgba(84,229,235,0.22), rgba(0,0,0,0.34)), url("/static/clique-cabana-cc-mark.png") center / 86% no-repeat; border-color: rgba(84,229,235,0.44); box-shadow: 0 0 34px rgba(84,229,235,0.16); }
+    .kicker::before { background: var(--cyan); box-shadow: 0 0 18px rgba(84,229,235,0.55); }
+    h1 { text-shadow: 0 0 26px rgba(84,229,235,0.20); }
+    input { border-color: rgba(84,229,235,0.25); background: rgba(0,0,0,0.48); }
+    input:focus { border-color: rgba(114,248,255,0.82); box-shadow: 0 0 0 4px rgba(84,229,235,0.12), 0 0 26px rgba(84,229,235,0.10); }
+    .button { background: linear-gradient(135deg, #72f8ff, #22c5d0); border-color: rgba(114,248,255,0.78); color: #001012; box-shadow: 0 18px 52px rgba(34,197,208,0.22); }
+
+  
+
+    /* Tasteful final brand system: contained PIN setup card with separated accents */
+    :root {
+      --ink: #f8ffff;
+      --muted: rgba(232,255,255,0.72);
+      --line: rgba(84,229,235,0.28);
+      --cyan: #54e5eb;
+    }
+
+    body {
+      background:
+        radial-gradient(circle at 14% 9%, rgba(84,229,235,0.18), transparent 24%),
+        radial-gradient(circle at 86% 8%, rgba(84,229,235,0.10), transparent 24%),
+        linear-gradient(135deg, #000 0%, #03090a 52%, #071517 100%);
+    }
+
+    body::after {
+      width: min(390px, 52vw);
+      height: min(610px, 72vh);
+      right: -120px;
+      bottom: -150px;
+      background-image: url("/static/clique-cabana-palm.png");
+      opacity: 0.075;
+      filter: drop-shadow(0 0 48px rgba(84,229,235,0.10));
+    }
+
+    .card {
+      max-width: 520px;
+      border-color: rgba(84,229,235,0.30);
+      background:
+        linear-gradient(145deg, rgba(2, 22, 26, 0.94), rgba(0,0,0,0.82));
+      box-shadow: 0 34px 115px rgba(0,0,0,0.72), inset 0 1px 0 rgba(84,229,235,0.11);
+    }
+
+    .card::after {
+      width: 130px;
+      height: 130px;
+      right: 22px;
+      bottom: 18px;
+      background-image: url("/static/clique-cabana-cc-mark.png");
+      background-size: contain;
+      opacity: 0.09;
+      filter: drop-shadow(0 0 28px rgba(84,229,235,0.12));
+    }
+
+    .brand-icon {
+      background:
+        linear-gradient(145deg, rgba(84,229,235,0.16), rgba(0,0,0,0.32)),
+        url("/static/clique-cabana-cc-mark.png") center / 78% no-repeat;
+      border-color: rgba(84,229,235,0.36);
+      box-shadow: 0 0 26px rgba(84,229,235,0.12), inset 0 0 0 1px rgba(255,255,255,0.04);
+    }
+
+    h1 {
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      letter-spacing: -0.035em;
+      text-transform: none;
+      text-shadow: 0 0 22px rgba(84,229,235,0.16);
+    }
+
+    input {
+      border-color: rgba(84,229,235,0.24);
+      background-color: rgba(0,0,0,0.54);
+    }
+
+    input:focus {
+      border-color: rgba(126,248,255,0.72);
+      box-shadow: 0 0 0 4px rgba(84,229,235,0.11);
+    }
+
+    .button {
+      background: linear-gradient(135deg, #f8ffff 0%, #7ef8ff 100%);
+      border-color: rgba(126,248,255,0.82);
+      color: #001114;
+      box-shadow: 0 18px 52px rgba(84,229,235,0.18);
+    }
+
+  
+    /* Professional brand placement pass */
+    :root {
+      --teal: #21d7e8;
+      --teal-soft: rgba(33, 215, 232, 0.18);
+      --teal-line: rgba(33, 215, 232, 0.42);
+      --cream: #fff8ef;
+      --black: #030405;
+    }
+
+    body {
+      background:
+        radial-gradient(circle at 18% 12%, rgba(33, 215, 232, 0.20), transparent 28%),
+        radial-gradient(circle at 84% 74%, rgba(255, 248, 239, 0.08), transparent 28%),
+        linear-gradient(135deg, #020303 0%, #05090a 44%, #0b0b0d 100%);
+    }
+
+    body::before {
+      background:
+        linear-gradient(rgba(33,215,232,0.040) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
+      background-size: 64px 64px;
+      opacity: 0.8;
+    }
+
+    body::after {
+      background-image: url('/static/clique-cabana-palm.png');
+      width: min(560px, 54vw);
+      height: min(820px, 86vh);
+      right: -145px;
+      bottom: -250px;
+      opacity: 0.055;
+      transform: rotate(-11deg);
+      filter: drop-shadow(0 30px 80px rgba(33,215,232,0.10));
+    }
+
+    .login-shell {
+      grid-template-columns: minmax(0, 1.02fr) minmax(390px, 0.82fr);
+      gap: clamp(18px, 2.2vw, 28px);
+      width: min(1180px, 100%);
+    }
+
+    .visual-card,
+    .auth-card,
+    .card {
+      border-color: rgba(33,215,232,0.28);
+      background:
+        linear-gradient(150deg, rgba(255,255,255,0.11), rgba(255,255,255,0.032)),
+        radial-gradient(circle at 26% 18%, rgba(33,215,232,0.16), transparent 32%),
+        radial-gradient(circle at 90% 4%, rgba(255,255,255,0.06), transparent 34%),
+        rgba(5, 8, 9, 0.74);
+      box-shadow: 0 36px 120px rgba(0,0,0,0.68), 0 0 0 1px rgba(33,215,232,0.08);
+    }
+
+    .visual-card {
+      min-height: 650px;
+      padding: clamp(26px, 4vw, 52px);
+    }
+
+    .visual-card::after { display: none; }
+
+    .visual-card .orbit {
+      border-color: rgba(33,215,232,0.16);
+      right: -190px;
+      top: 20px;
+      opacity: 0.8;
+    }
+
+    .brand-icon,
+    .lock-badge {
+      border-color: rgba(33,215,232,0.34);
+      background-color: rgba(33,215,232,0.06);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04), 0 16px 44px rgba(33,215,232,0.10);
+    }
+
+    .brand-icon {
+      background-image: linear-gradient(145deg, rgba(33,215,232,0.20), rgba(255,255,255,0.04)), url('/static/clique-cabana-palm.png');
+      background-size: auto, 58%;
+    }
+
+    .brand-name strong,
+    .auth-kicker,
+    .eyebrow,
+    label,
+    .security-chip,
+    .tiny-note {
+      letter-spacing: 0.16em;
+    }
+
+    .eyebrow,
+    .auth-kicker,
+    .kicker {
+      color: rgba(33,215,232,0.88);
+    }
+
+    .eyebrow::before,
+    .auth-kicker::before,
+    .kicker::before {
+      background: var(--teal);
+      box-shadow: 0 0 18px rgba(33,215,232,0.45);
+    }
+
+    .hero-copy {
+      max-width: 620px;
+      padding-top: 8px;
+    }
+
+    h1, h2 {
+      font-family: Georgia, 'Times New Roman', serif;
+    }
+
+    h1 {
+      font-size: clamp(48px, 7.1vw, 88px);
+      letter-spacing: -0.055em;
+    }
+
+    .hero-note, .subtext, .tiny-note, .brand-name span {
+      color: rgba(255,248,239,0.66);
+    }
+
+    .meta-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: end;
+      gap: 24px;
+      margin-top: clamp(26px, 4vw, 48px);
+    }
+
+    .signature-mark {
+      width: min(560px, 100%);
+      max-height: 285px;
+      object-fit: contain;
+      object-position: left bottom;
+      opacity: 1;
+      padding: 0;
+      filter: drop-shadow(0 24px 60px rgba(0,0,0,0.62)) drop-shadow(0 0 28px rgba(33,215,232,0.12));
+    }
+
+    .security-chip {
+      align-self: end;
+      border-color: rgba(33,215,232,0.40);
+      color: rgba(255,248,239,0.86);
+      background: linear-gradient(135deg, rgba(33,215,232,0.15), rgba(255,255,255,0.035));
+    }
+
+    .auth-card { padding: clamp(24px, 3.2vw, 38px); }
+
+    .auth-tabs {
+      border-color: rgba(33,215,232,0.24);
+      background: rgba(0,0,0,0.30);
+    }
+
+    .auth-tab.active {
+      background: var(--teal);
+      color: #001114;
+      box-shadow: 0 15px 38px rgba(33,215,232,0.18);
+    }
+
+    input, select {
+      border-color: rgba(33,215,232,0.20);
+      background: rgba(0,0,0,0.40);
+    }
+
+    input:focus, select:focus {
+      border-color: rgba(33,215,232,0.70);
+      box-shadow: 0 0 0 4px rgba(33,215,232,0.12), inset 0 1px 0 rgba(255,255,255,0.06);
+    }
+
+    .button {
+      border-color: var(--teal);
+      background: linear-gradient(135deg, var(--teal), #e9fdff);
+      color: #001114;
+      box-shadow: 0 18px 46px rgba(33,215,232,0.18);
+    }
+
+    .button:hover { box-shadow: 0 22px 60px rgba(33,215,232,0.24); }
+
+    .dev-link { color: var(--teal); }
+
+    @media (max-width: 920px) {
+      .login-shell { grid-template-columns: 1fr; }
+      .visual-card { min-height: auto; }
+      .meta-row { grid-template-columns: 1fr; }
+      .signature-mark { width: min(430px, 100%); }
+    }
+
+
+
+    /* Requested update: bigger logo + tasteful repeating palm background accents */
+    :root {
+      --cc-aqua: #21d7e8;
+      --cc-aqua-soft: #7ef8ff;
+      --cc-white: #ffffff;
+    }
+
+    html body {
+      background: #020405 !important;
+      overflow-x: hidden;
+    }
+
+    html body::before {
+      content: "" !important;
+      position: fixed !important;
+      inset: -8vh -8vw !important;
+      pointer-events: none !important;
+      z-index: 0 !important;
+      background-image:
+        url('/static/clique-cabana-palm-aqua.png'),
+        url('/static/clique-cabana-palm-white.png'),
+        url('/static/clique-cabana-palm-soft-aqua.png'),
+        url('/static/clique-cabana-palm-aqua.png') !important;
+      background-size:
+        180px auto,
+        132px auto,
+        240px auto,
+        96px auto !important;
+      background-position:
+        34px 42px,
+        250px 155px,
+        520px 18px,
+        715px 310px !important;
+      background-repeat: repeat !important;
+      opacity: 0.18 !important;
+      filter: drop-shadow(0 0 18px rgba(33, 215, 232, 0.18)) !important;
+      mix-blend-mode: screen !important;
+    }
+
+    html body::after {
+      content: "" !important;
+      position: fixed !important;
+      inset: 0 !important;
+      pointer-events: none !important;
+      z-index: 0 !important;
+      background:
+        radial-gradient(circle at 18% 14%, rgba(33, 215, 232, 0.17), transparent 30%),
+        radial-gradient(circle at 86% 24%, rgba(126, 248, 255, 0.10), transparent 28%),
+        linear-gradient(180deg, rgba(0,0,0,0.38), rgba(0,0,0,0.82)) !important;
+    }
+
+    body > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .visual-card,
+    .auth-card,
+    .brand-shell,
+    .card,
+    .panel,
+    .events-list,
+    .event-card,
+    .form-card {
+      position: relative;
+      z-index: 2;
+    }
+
+    .wordmark,
+    .wordmark.signature-mark {
+      position: relative;
+      z-index: 3;
+      filter: drop-shadow(0 24px 48px rgba(0,0,0,0.62)) drop-shadow(0 0 22px rgba(33,215,232,0.16));
+    }
+
+
+    .card {
+      width: min(560px, calc(100% - 34px)) !important;
+      border-color: rgba(126,248,255,0.22) !important;
+      box-shadow: 0 34px 110px rgba(0,0,0,0.64), 0 0 0 1px rgba(33,215,232,0.08) inset !important;
+      backdrop-filter: blur(24px) saturate(1.14) !important;
+    }
+
+    .card::after {
+      background-image: url('/static/clique-cabana-palm-aqua.png') !important;
+      background-size: 62% auto !important;
+      background-position: right -64px bottom -92px !important;
+      opacity: 0.12 !important;
+    }
+
+    .brand-icon {
+      transform: scale(1.12) !important;
+      box-shadow: 0 0 42px rgba(33,215,232,0.24) !important;
+    }
+
+    @media (max-width: 720px) {
+      html body::before { background-size: 150px auto, 110px auto, 210px auto, 82px auto !important; opacity: 0.15 !important; }
+    }
+
+
+
+    /* FINAL REFINEMENT: contained logo + non-overlapping alternating palm background */
+    :root {
+      --cc-aqua: #21d7e8;
+      --cc-aqua-bright: #7ef8ff;
+      --cc-cream: #fff8ef;
+      --cc-panel: rgba(5, 13, 15, 0.82);
+    }
+
+    html body {
+      background:
+        radial-gradient(circle at 18% 12%, rgba(33, 215, 232, 0.15), transparent 30%),
+        radial-gradient(circle at 82% 78%, rgba(126, 248, 255, 0.08), transparent 34%),
+        linear-gradient(135deg, #020405 0%, #041012 50%, #020405 100%) !important;
+      overflow-x: hidden !important;
+    }
+
+    html body::before {
+      content: "" !important;
+      position: fixed !important;
+      inset: 0 !important;
+      pointer-events: none !important;
+      z-index: 0 !important;
+      background-image: url('/static/palm-background-pattern.png') !important;
+      background-repeat: repeat !important;
+      background-size: 760px auto !important;
+      background-position: center top !important;
+      opacity: 0.34 !important;
+      filter: drop-shadow(0 0 16px rgba(33, 215, 232, 0.12)) !important;
+      mix-blend-mode: screen !important;
+      mask-image: linear-gradient(90deg, rgba(0,0,0,0.60), black 18%, black 82%, rgba(0,0,0,0.60)) !important;
+    }
+
+    html body::after {
+      content: "" !important;
+      position: fixed !important;
+      inset: 0 !important;
+      pointer-events: none !important;
+      z-index: 0 !important;
+      background:
+        radial-gradient(circle at 50% 20%, rgba(33, 215, 232, 0.08), transparent 30%),
+        linear-gradient(180deg, rgba(0,0,0,0.22), rgba(0,0,0,0.78)) !important;
+    }
+
+    body > * { position: relative; z-index: 1; }
+
+    .visual-card,
+    .auth-card,
+    .brand-shell,
+    .tabs,
+    .panel,
+    .event-card,
+    .form-card,
+    .card {
+      position: relative !important;
+      z-index: 2 !important;
+      background:
+        linear-gradient(145deg, rgba(8, 22, 25, 0.92), rgba(2, 4, 5, 0.84)) !important;
+      border-color: rgba(33, 215, 232, 0.28) !important;
+      box-shadow: 0 34px 110px rgba(0,0,0,0.66), inset 0 1px 0 rgba(126,248,255,0.08) !important;
+    }
+
+    .visual-card,
+    .brand-shell {
+      overflow: hidden !important;
+    }
+
+    .visual-card::after,
+    .brand-shell::after,
+    .auth-card::after {
+      display: none !important;
+      content: none !important;
+    }
+
+    .login-shell {
+      width: min(1160px, 100%) !important;
+      grid-template-columns: minmax(0, 1.02fr) minmax(380px, 0.85fr) !important;
+      gap: clamp(18px, 2.2vw, 28px) !important;
+    }
+
+    .visual-card {
+      min-height: clamp(560px, 72vh, 700px) !important;
+      padding: clamp(30px, 4vw, 52px) !important;
+      justify-content: space-between !important;
+      gap: clamp(20px, 3vw, 34px) !important;
+    }
+
+    .logo-only-row,
+    .meta-row {
+      display: grid !important;
+      grid-template-columns: 1fr !important;
+      justify-items: center !important;
+      align-items: center !important;
+      width: 100% !important;
+      margin: clamp(14px, 2vw, 22px) auto 0 !important;
+    }
+
+    .visual-card .wordmark,
+    .logo-only-row .wordmark,
+    .wordmark.signature-mark {
+      width: min(620px, 92%) !important;
+      max-width: 100% !important;
+      max-height: 330px !important;
+      height: auto !important;
+      object-fit: contain !important;
+      object-position: center center !important;
+      transform: none !important;
+      margin: 0 auto !important;
+      filter: drop-shadow(0 26px 56px rgba(0,0,0,0.66)) drop-shadow(0 0 24px rgba(33,215,232,0.20)) !important;
+    }
+
+    .security-chip { display: none !important; }
+
+    .hero-copy { max-width: 580px !important; }
+
+    .auth-card { min-height: auto !important; }
+
+    .brand-shell {
+      padding: clamp(28px, 4vw, 48px) !important;
+    }
+
+    .brand-shell .hero {
+      grid-template-columns: minmax(280px, 0.86fr) minmax(360px, 1.14fr) !important;
+      align-items: center !important;
+      gap: clamp(24px, 4vw, 58px) !important;
+    }
+
+    .brand-shell .hero .wordmark,
+    .brand-shell .wordmark {
+      width: min(640px, 100%) !important;
+      max-width: 100% !important;
+      max-height: 350px !important;
+      height: auto !important;
+      object-fit: contain !important;
+      object-position: center right !important;
+      transform: none !important;
+      justify-self: end !important;
+      filter: drop-shadow(0 26px 58px rgba(0,0,0,0.64)) drop-shadow(0 0 24px rgba(33,215,232,0.16)) !important;
+    }
+
+    .brand-icon {
+      background-image: linear-gradient(145deg, rgba(33,215,232,0.22), rgba(255,255,255,0.045)), url('/static/clique-cabana-palm.png') !important;
+      background-size: auto, 58% !important;
+      background-position: center, center !important;
+      background-repeat: no-repeat !important;
+    }
+
+    .button,
+    .auth-tab.active,
+    .tab-button.active {
+      background: linear-gradient(135deg, var(--cc-aqua), var(--cc-aqua-bright)) !important;
+      color: #001114 !important;
+      border-color: rgba(126,248,255,0.72) !important;
+    }
+
+    @media (max-width: 1000px) {
+      .login-shell,
+      .brand-shell .hero { grid-template-columns: 1fr !important; }
+      .visual-card { min-height: auto !important; }
+      .visual-card .wordmark,
+      .logo-only-row .wordmark,
+      .wordmark.signature-mark,
+      .brand-shell .hero .wordmark,
+      .brand-shell .wordmark {
+        width: min(560px, 94vw) !important;
+        max-height: 300px !important;
+        justify-self: center !important;
+        object-position: center center !important;
+      }
+      html body::before { background-size: 620px auto !important; opacity: 0.28 !important; }
+    }
+
+    @media (max-width: 560px) {
+      html body::before { background-size: 470px auto !important; opacity: 0.24 !important; }
+      .visual-card,
+      .auth-card,
+      .brand-shell { border-radius: 26px !important; }
+      .visual-card .wordmark,
+      .logo-only-row .wordmark,
+      .wordmark.signature-mark,
+      .brand-shell .hero .wordmark,
+      .brand-shell .wordmark {
+        width: min(360px, 92vw) !important;
+        max-height: 230px !important;
+      }
+    }
+
+  
+
+    /* FINAL BRAND-HIERARCHY PASS */
+    .pin-brand-logo-wrap {
+      width: 100%;
+      display: grid;
+      place-items: center;
+      margin: clamp(20px, 4vw, 34px) 0 clamp(16px, 3vw, 26px);
+    }
+    .pin-brand-logo {
+      width: min(520px, 96%);
+      max-height: 250px;
+      object-fit: contain;
+      filter: drop-shadow(0 24px 58px rgba(0,0,0,0.66)) drop-shadow(0 0 26px rgba(33,215,232,0.18));
+    }
+    .card h1 {
+      font-family: Georgia, "Times New Roman", serif !important;
+      font-size: clamp(34px, 7vw, 58px) !important;
+      line-height: 0.96 !important;
+      letter-spacing: -0.052em !important;
+      text-transform: none !important;
+    }
+
+  
+
+/* Final adjustment: center and enlarge the primary Clique Cabana logo on PIN setup */
+.logo-only-row,
+.meta-row,
+.brand-first-logo {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  justify-items: center !important;
+  justify-content: center !important;
+  align-items: center !important;
+  width: 100% !important;
+  margin: clamp(18px, 3vw, 34px) auto clamp(22px, 4vw, 42px) !important;
+  text-align: center !important;
+}
+
+.visual-card .wordmark,
+.visual-card .wordmark.signature-mark,
+.logo-only-row .wordmark,
+.logo-only-row .wordmark.signature-mark,
+.brand-first-logo .wordmark,
+.brand-first-logo .wordmark.signature-mark {
+  width: min(680px, 96%) !important;
+  max-width: 96% !important;
+  max-height: 390px !important;
+  object-fit: contain !important;
+  object-position: center center !important;
+  justify-self: center !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  transform: none !important;
+  filter: drop-shadow(0 26px 70px rgba(0,0,0,0.72)) drop-shadow(0 0 38px rgba(33,215,232,0.18)) !important;
+}
+
+.hero-copy {
+  text-align: left !important;
+}
+
+@media (max-width: 920px) {
+  .visual-card .wordmark,
+  .visual-card .wordmark.signature-mark,
+  .logo-only-row .wordmark,
+  .logo-only-row .wordmark.signature-mark,
+  .brand-first-logo .wordmark,
+  .brand-first-logo .wordmark.signature-mark {
+    width: min(600px, 96%) !important;
+    max-height: 330px !important;
+  }
+}
+
+@media (max-width: 560px) {
+  .visual-card .wordmark,
+  .visual-card .wordmark.signature-mark,
+  .logo-only-row .wordmark,
+  .logo-only-row .wordmark.signature-mark,
+  .brand-first-logo .wordmark,
+  .brand-first-logo .wordmark.signature-mark {
+    width: min(430px, 98%) !important;
+    max-height: 260px !important;
+  }
+
+  .hero-copy {
+    text-align: center !important;
+  }
+}
+
+
+
+/* Final PIN setup logo sizing pass: make the logo fill the available brand space without crossing card boundaries */
+.visual-card {
+  display: grid !important;
+  grid-template-rows: auto minmax(330px, 1fr) auto !important;
+  align-content: stretch !important;
+  gap: clamp(18px, 2.6vw, 34px) !important;
+}
+
+.visual-card .brand-first-logo,
+.visual-card .logo-only-row,
+.visual-card .meta-row {
+  width: 100% !important;
+  min-height: clamp(330px, 42vh, 470px) !important;
+  display: grid !important;
+  place-items: center !important;
+  justify-items: center !important;
+  align-items: center !important;
+  margin: 0 auto !important;
+  padding: clamp(8px, 1.5vw, 18px) 0 !important;
+  overflow: hidden !important;
+}
+
+.visual-card .wordmark,
+.visual-card .wordmark.signature-mark,
+.visual-card .brand-first-logo .wordmark,
+.visual-card .brand-first-logo .wordmark.signature-mark,
+.visual-card .logo-only-row .wordmark,
+.visual-card .logo-only-row .wordmark.signature-mark {
+  width: min(760px, 100%) !important;
+  height: auto !important;
+  max-width: 100% !important;
+  max-height: clamp(330px, 42vh, 470px) !important;
+  object-fit: contain !important;
+  object-position: center center !important;
+  justify-self: center !important;
+  align-self: center !important;
+  margin: 0 auto !important;
+  transform: scale(1.16) !important;
+  transform-origin: center center !important;
+  filter: drop-shadow(0 28px 78px rgba(0,0,0,0.72)) drop-shadow(0 0 42px rgba(33,215,232,0.20)) !important;
+}
+
+.visual-card .hero-copy {
+  margin-top: 0 !important;
+}
+
+@media (max-width: 920px) {
+  .visual-card {
+    grid-template-rows: auto minmax(260px, auto) auto !important;
+  }
+
+  .visual-card .brand-first-logo,
+  .visual-card .logo-only-row,
+  .visual-card .meta-row {
+    min-height: clamp(260px, 34vh, 370px) !important;
+  }
+
+  .visual-card .wordmark,
+  .visual-card .wordmark.signature-mark,
+  .visual-card .brand-first-logo .wordmark,
+  .visual-card .brand-first-logo .wordmark.signature-mark,
+  .visual-card .logo-only-row .wordmark,
+  .visual-card .logo-only-row .wordmark.signature-mark {
+    max-height: clamp(260px, 34vh, 370px) !important;
+    transform: scale(1.10) !important;
+  }
+}
+
+@media (max-width: 560px) {
+  .visual-card .brand-first-logo,
+  .visual-card .logo-only-row,
+  .visual-card .meta-row {
+    min-height: 235px !important;
+  }
+
+  .visual-card .wordmark,
+  .visual-card .wordmark.signature-mark,
+  .visual-card .brand-first-logo .wordmark,
+  .visual-card .brand-first-logo .wordmark.signature-mark,
+  .visual-card .logo-only-row .wordmark,
+  .visual-card .logo-only-row .wordmark.signature-mark {
+    width: min(510px, 100%) !important;
+    max-height: 235px !important;
+    transform: scale(1.06) !important;
+  }
+}
+
+
+
+/* Final PIN setup brand treatment: larger glowing logo with no artificial logo box */
+.visual-card .brand-first-logo,
+.visual-card .logo-only-row,
+.visual-card .meta-row {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  outline: 0 !important;
+  overflow: visible !important;
+}
+
+.visual-card .brand-first-logo::before,
+.visual-card .brand-first-logo::after,
+.visual-card .logo-only-row::before,
+.visual-card .logo-only-row::after,
+.visual-card .meta-row::before,
+.visual-card .meta-row::after {
+  display: none !important;
+  content: none !important;
+}
+
+.visual-card .wordmark,
+.visual-card .wordmark.signature-mark,
+.visual-card .brand-first-logo .wordmark,
+.visual-card .brand-first-logo .wordmark.signature-mark,
+.visual-card .logo-only-row .wordmark,
+.visual-card .logo-only-row .wordmark.signature-mark {
+  width: min(820px, 104%) !important;
+  max-width: 104% !important;
+  transform: scale(1.12) !important;
+  filter:
+    drop-shadow(0 30px 84px rgba(0,0,0,0.76))
+    drop-shadow(0 0 44px rgba(33,215,232,0.30))
+    drop-shadow(0 0 92px rgba(33,215,232,0.14)) !important;
+}
+
+@media (max-width: 560px) {
+  .visual-card .wordmark,
+  .visual-card .wordmark.signature-mark,
+  .visual-card .brand-first-logo .wordmark,
+  .visual-card .brand-first-logo .wordmark.signature-mark,
+  .visual-card .logo-only-row .wordmark,
+  .visual-card .logo-only-row .wordmark.signature-mark {
+    width: min(520px, 100%) !important;
+    max-width: 100% !important;
+    transform: scale(1.04) !important;
+  }
+}
+
+</style>
+</head>
+<body>
+  <main class="card">
+    <div class="brand-mark">
+      <div class="brand-icon" aria-hidden="true"></div>
+      <div class="brand-name">
+        <strong>Clique Cabana</strong>
+        <span>One-time PIN setup</span>
+      </div>
+    </div>
+
+    <div class="pin-brand-logo-wrap">
+      <img class="pin-brand-logo" src="/static/clique-cabana-main-logo.png" alt="Clique Cabana logo" />
+    </div>
+
+    {% if expired %}
+      <section class="expired-panel">
+        <div class="kicker">Access Link</div>
+        <h1>Link Expired</h1>
+        <p>This setup link is invalid, expired, or already used. Go back to the login page and request a new PIN setup link.</p>
+        <a href="/login">Back to login</a>
+      </section>
+    {% else %}
+      <div class="kicker">Verified Setup</div>
+      <h1>Create PIN</h1>
+      <p>Setting up access for <strong>{{ member_name }}</strong>. Choose a private 4–8 digit PIN.</p>
+
+      <form id="pinForm">
+        <input type="hidden" id="token" value="{{ token }}" />
+        <label>
+          New PIN
+          <input id="pin" type="password" inputmode="numeric" autocomplete="new-password" placeholder="4–8 digits" required />
+        </label>
+        <label>
+          Confirm PIN
+          <input id="pinConfirm" type="password" inputmode="numeric" autocomplete="new-password" placeholder="Re-enter PIN" required />
+        </label>
+        <button class="button" type="submit">Save PIN</button>
+        <div id="message" class="message"></div>
+      </form>
+    {% endif %}
+  </main>
+
+  <script>
+    const form = document.getElementById("pinForm");
+
+    if (form) {
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const message = document.getElementById("message");
+        message.classList.remove("error");
+        message.textContent = "";
+
+        try {
+          const response = await fetch("/api/auth/set-pin", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              token: document.getElementById("token").value,
+              pin: document.getElementById("pin").value,
+              pinConfirm: document.getElementById("pinConfirm").value
+            })
+          });
+
+          const data = await response.json();
+          if (!response.ok) {
+            throw new Error(data.error || "Something went wrong.");
+          }
+
+          message.textContent = "Success. Returning to the login page...";
+          setTimeout(() => {
+            window.location.href = data.redirectUrl;
+          }, 1200);
+        } catch (error) {
+          message.classList.add("error");
+          message.textContent = error.message;
+        }
+      });
+    }
+  </script>
+</body>
+</html>
