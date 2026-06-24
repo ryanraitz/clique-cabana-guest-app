@@ -48,11 +48,11 @@ from email.message import EmailMessage
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-change-this-secret-key")
 
-DATA_FILE = Path("data.json")
-GOOGLE_SHEETS_CONFIG_FILE = Path("google_sheets_config.json")
-SERVICE_ACCOUNT_FILE = Path("service_account.json")
-TEAM_MEMBERS_FILE = Path("team_members.txt")
-AUTH_DB_FILE = Path("auth.sqlite3")
+DATA_FILE = Path(os.environ.get("DATA_FILE", "data.json"))
+GOOGLE_SHEETS_CONFIG_FILE = Path(os.environ.get("GOOGLE_SHEETS_CONFIG_FILE", "google_sheets_config.json"))
+SERVICE_ACCOUNT_FILE = Path(os.environ.get("SERVICE_ACCOUNT_FILE", "service_account.json"))
+TEAM_MEMBERS_FILE = Path(os.environ.get("TEAM_MEMBERS_FILE", "team_members.txt"))
+AUTH_DB_FILE = Path(os.environ.get("AUTH_DB_FILE", "auth.sqlite3"))
 CHANGE_LOG_SHEET_TITLE = "Change Log"
 CHANGE_LOG_HEADERS = ["Timestamp", "Action", "Event", "Guest", "DJ / Team Member", "Team Member/User", "Details"]
 SHEETS_BOOTSTRAPPED = False
