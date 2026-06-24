@@ -189,6 +189,11 @@ def get_current_member():
         ).fetchone()
 
 
+def get_current_member_name():
+    """Return the logged-in team member name for audit columns/edits."""
+    return session.get("member_name") or ""
+
+
 def is_valid_email(email):
     return bool(re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email or ""))
 
@@ -517,29 +522,24 @@ def sync_google_sheets():
             worksheet = existing_worksheets[title]
             worksheet.clear()
         else:
-            worksheet = spreadsheet.add_worksheet(title=title, rows=200, cols=11)
+            worksheet = spreadsheet.add_worksheet(title=title, rows=200, cols=7)
 
         event_guests = [guest for guest in data["guests"] if guest["eventId"] == event["id"]]
 
         rows = [
-            ["Event", event["name"]],
-            ["DJs", ", ".join(event["djs"])],
-            [],
-            ["First Name", "Last Name", "Phone", "Email", "Friends", "DJ / Team Member", "Text", "Status", "Checked In"],
+            ["Guest", "Phone", "Email", "Friends", "DJ / Team Member", "Text", "User"],
         ]
 
         for guest in event_guests:
-            checked_in = bool(guest.get("checkedIn"))
+            guest_name = f'{guest.get("firstName", "")} {guest.get("lastName", "")}'.strip()
             rows.append([
-                guest.get("firstName", ""),
-                guest.get("lastName", ""),
+                guest_name,
                 guest.get("phone", ""),
                 guest.get("email", ""),
                 guest.get("friends", "") if int(guest.get("friends") or 0) >= 1 else "",
                 guest.get("teamMember", "") or guest.get("dj", ""),
                 guest.get("text", "Pending"),
-                "Checked In" if checked_in else "Not Checked In",
-                "Yes" if checked_in else "No"
+                guest.get("lastEditedBy", "") or guest.get("createdBy", "")
             ])
 
         worksheet.update(rows)
@@ -947,7 +947,9 @@ def build_guest_from_fields(data, fields, force_add=False):
         "smsConfirmationSent": False,
         "smsConfirmationSentAt": "",
         "smsConfirmationStatus": "",
-        "checkedIn": False
+        "checkedIn": False,
+        "createdBy": get_current_member_name(),
+        "lastEditedBy": get_current_member_name()
     }
 
     return new_guest, "", matching_event
@@ -1086,6 +1088,7 @@ def check_in_guest(guest_id):
         return jsonify({"error": "Guest not found."}), 404
 
     guest["checkedIn"] = True
+    guest["lastEditedBy"] = get_current_member_name()
     sync_result = save_and_sync(data)
 
     return jsonify({"guest": guest, "sync": sync_result})
@@ -1101,6 +1104,7 @@ def uncheck_guest(guest_id):
         return jsonify({"error": "Guest not found."}), 404
 
     guest["checkedIn"] = False
+    guest["lastEditedBy"] = get_current_member_name()
     sync_result = save_and_sync(data)
 
     return jsonify({"guest": guest, "sync": sync_result})
