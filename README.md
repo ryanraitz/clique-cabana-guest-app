@@ -379,3 +379,24 @@ Notes:
 - The `DJ/Team Member` value must match either a DJ already listed on that event or a name in `team_members.txt`.
 - Imported guests are saved the same way manually added guests are saved.
 - Each imported guest receives the same SMS confirmation request as a manually added guest when Twilio is configured. If Twilio is not configured, the text is printed in the terminal.
+
+## Render restart/redeploy data recovery from Google Sheets
+
+This version treats the linked Google Sheet as the recoverable source of truth when the app starts.
+
+On startup, the app reads the configured Google Sheet, imports the Event Index tab, imports each event tab listed in the Sheet Tab column, rebuilds `data.json`, and then the Events page uses that rebuilt local data while the app is running.
+
+Required Google Sheet structure:
+
+Event Index columns:
+`Event Name | DJs | Total Guests | Checked In | Not Checked In | Sheet Tab`
+
+Each event tab columns:
+`Guest | Phone | Email | Friends | DJ / Team Member | Text | User | Checked In | Not Checked In`
+
+Important notes:
+- Google Sheets must remain enabled in `google_sheets_config.json`.
+- The Render service must have access to `service_account.json`, and the Google Sheet must be shared with the service account email.
+- While the app is running, create/delete/check-in/uncheck actions still dynamically update Google Sheets.
+- After a Render restart or redeploy, the app pulls the latest Sheet state back into the Events page.
+- There is also a manual recovery endpoint: `POST /api/import-from-google-sheets`.
