@@ -4546,13 +4546,17 @@
     }
 
     function getGuestPayload(forceAdd = false) {
+      const eventSelect = document.getElementById("guestEventSelect");
+      const selectedEventOption = eventSelect.options[eventSelect.selectedIndex];
+
       return {
         firstName: document.getElementById("firstName").value,
         lastName: document.getElementById("lastName").value,
         phone: document.getElementById("phone").value,
         email: document.getElementById("email").value,
         friends: document.getElementById("friends").value,
-        eventId: document.getElementById("guestEventSelect").value,
+        eventId: eventSelect.value,
+        eventName: selectedEventOption ? selectedEventOption.textContent : "",
         dj: document.getElementById("guestDjSelect").value,
         teamMember: document.getElementById("guestTeamMemberSelect").value,
         forceAdd
