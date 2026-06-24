@@ -1,6 +1,13 @@
 # Format: First Last,approved-email@example.com
 # PIN setup is blocked until each person's approved email is added.
-Ryan Raitz,ryanraitz96@gmail.com
+Grant Stallings,grant@cliquecabana.com
+Nic Sparc,nic@cliquecabana.com
+Ty Abbott,ty@cliquecabana.com
+Luke Younts,luke@cliquecabana.com
+Bil Carter,bil@cliquecabana.com
+Curtis Roland,curtis@cliquecabana.com
+Chuka Offor,chuka@risetalentgroup.com
+Jake Zamarra,
 Abby Sparks,
-Ty Abbott,
-Bil Carter,
+Chelsea Whitmire,chelsea@cliquecabana.com
+Ryan Raitz,ryanraitz96@gmail.com
