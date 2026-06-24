@@ -134,6 +134,16 @@ def load_team_members():
     return [record["name"] for record in load_team_member_records()]
 
 
+def load_team_members_without_active_pin():
+    """Return team member names that do not currently have an active PIN saved."""
+    file_names = load_team_members()
+    with get_auth_connection() as connection:
+        rows = connection.execute("SELECT name, pin_hash FROM team_members").fetchall()
+
+    pin_by_name = {row["name"]: row["pin_hash"] for row in rows}
+    return [name for name in file_names if not pin_by_name.get(name)]
+
+
 def get_auth_connection():
     connection = sqlite3.connect(AUTH_DB_FILE)
     connection.row_factory = sqlite3.Row
@@ -332,14 +342,14 @@ def send_pin_setup_email(email, name, setup_url):
     smtp_password = os.environ.get("SMTP_PASSWORD")
     from_email = os.environ.get("FROM_EMAIL", smtp_user or "no-reply@cliquecabana.local")
 
-    subject = "Create your Clique Cabana PIN"
+    subject = "Create or update your Clique Cabana PIN"
     body = f"""Hi {name},
 
-Use this one-time link to create your Clique Cabana guest list PIN:
+Use this one-time link to create or update your Clique Cabana guest list PIN:
 
 {setup_url}
 
-This link expires in {PIN_TOKEN_HOURS} hour. If you did not request this, ignore this email.
+This link expires in {PIN_TOKEN_HOURS} hour. If you did not request this, ignore this email. Any existing PIN remains active until a new PIN is saved.
 """
 
     if not smtp_host or not smtp_user or not smtp_password:
@@ -865,6 +875,7 @@ def login():
     return render_template(
         "login.html",
         team_members=load_team_members(),
+        setup_team_members=load_team_members_without_active_pin(),
         setup_success=request.args.get("setup") == "success"
     )
 
@@ -880,11 +891,13 @@ def request_pin_setup():
     payload = request.get_json(force=True)
     name = payload.get("name", "").strip()
     email = payload.get("email", "").strip().lower()
+    purpose = payload.get("purpose", "create").strip().lower()
+    is_reset_request = purpose == "reset"
 
     if name not in load_team_members():
         return jsonify({"error": "Select a valid team member."}), 400
 
-    if not is_valid_email(email):
+    if not is_reset_request and not is_valid_email(email):
         return jsonify({"error": "Enter a valid email address."}), 400
 
     with get_auth_connection() as connection:
@@ -898,8 +911,15 @@ def request_pin_setup():
                 "error": "No approved email is configured for this team member. Add their email to team_members.txt as: Name,email@example.com."
             }), 403
 
-        if approved_email != email:
-            return jsonify({"error": "That email does not match the approved email for this team member."}), 403
+        if is_reset_request:
+            if not member["pin_hash"]:
+                return jsonify({"error": "Forgot password is only available after a PIN has already been created for this team member."}), 400
+            email = approved_email
+        else:
+            if member["pin_hash"]:
+                return jsonify({"error": "A PIN already exists for this team member. Use Forgot Password from the login form to request a new setup link."}), 400
+            if approved_email != email:
+                return jsonify({"error": "That email does not match the approved email for this team member."}), 403
 
         now = datetime.now(timezone.utc)
         token = secrets.token_urlsafe(32)
@@ -916,9 +936,14 @@ def request_pin_setup():
     setup_url = url_for("setup_pin", token=token, _external=True)
     email_result = send_pin_setup_email(email, name, setup_url)
 
+    if is_reset_request:
+        message = "PIN reset link sent. Check your email for the one-time link. Your current PIN stays active until you save a new one."
+    else:
+        message = "Verification started. Check your email for the one-time PIN setup link."
+
     return jsonify({
         "success": True,
-        "message": "Verification started. Check your email for the one-time PIN setup link.",
+        "message": message,
         "email": email_result
     })
 
