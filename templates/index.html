@@ -2026,38 +2026,37 @@
     }
 
     .guest-col-name { width: 14%; }
-    .guest-col-phone { width: 12%; }
-    .guest-col-email { width: 19%; }
-    .guest-col-friends { width: 8%; }
-    .guest-col-dj { width: 14%; }
+    .guest-col-dj { width: 15%; }
+    .guest-col-friends { width: 7%; }
     .guest-col-text { width: 8%; }
-    .guest-col-actions { width: 25%; }
+    .guest-col-phone { width: 13%; }
+    .guest-col-email { width: 20%; }
+    .guest-col-checkin { width: 11%; }
+    .guest-col-remove { width: 12%; }
 
     .guest-table td:nth-child(1),
     .guest-table td:nth-child(2),
-    .guest-table td:nth-child(3),
-    .guest-table td:nth-child(5) {
+    .guest-table td:nth-child(5),
+    .guest-table td:nth-child(6) {
       overflow-wrap: anywhere;
     }
 
-    .guest-table th:nth-child(4),
-    .guest-table td:nth-child(4) {
+    .guest-table th:nth-child(3),
+    .guest-table td:nth-child(3) {
       text-align: center;
       white-space: nowrap;
-      padding-left: 22px;
-      padding-right: 22px;
+      padding-left: 18px;
+      padding-right: 18px;
       border-left: 1px solid rgba(84,229,235,0.12);
       border-right: 1px solid rgba(84,229,235,0.12);
     }
 
-    .guest-table th:nth-child(5),
-    .guest-table td:nth-child(5) {
-      padding-left: 22px;
-    }
-
-    .guest-table th:nth-child(6),
-    .guest-table td:nth-child(6) {
+    .guest-table th:nth-child(7),
+    .guest-table td:nth-child(7),
+    .guest-table th:nth-child(8),
+    .guest-table td:nth-child(8) {
       text-align: left;
+      white-space: nowrap;
     }
 
     .row-actions {
@@ -4533,22 +4532,24 @@
           <table class="guest-table" id="guest-table-${eventId}">
             <colgroup>
               <col class="guest-col-name" />
+              <col class="guest-col-dj" />
+              <col class="guest-col-friends" />
+              <col class="guest-col-text" />
               <col class="guest-col-phone" />
               <col class="guest-col-email" />
-              <col class="guest-col-friends" />
-              <col class="guest-col-dj" />
-              <col class="guest-col-text" />
-              <col class="guest-col-actions" />
+              <col class="guest-col-checkin" />
+              <col class="guest-col-remove" />
             </colgroup>
             <thead>
               <tr>
-                <th>Guest</th>
-                <th>Phone</th>
-                <th>Email</th>
+                <th>Guest Name</th>
+                <th>Team Member / DJ</th>
                 <th>Friends</th>
-                <th>DJ / Team Member</th>
                 <th>Text</th>
-                <th>Actions</th>
+                <th>Phone Number</th>
+                <th>Email</th>
+                <th>Check-In</th>
+                <th>Remove</th>
               </tr>
             </thead>
 
@@ -4559,19 +4560,23 @@
                   data-guest-name="${escapeHtml(`${guest.firstName || ""} ${guest.lastName || ""}`).toLowerCase()}"
                 >
                   <td class="guest-name-cell">${escapeHtml(guest.firstName)} ${escapeHtml(guest.lastName)}</td>
+                  <td>${escapeHtml(guest.teamMember || guest.dj || "-")}</td>
+                  <td>${Number(guest.friends || 0) >= 1 ? escapeHtml(String(guest.friends)) : ""}</td>
+                  <td>${escapeHtml(guest.text || "Pending")}</td>
                   <td>${escapeHtml(guest.phone || "-")}</td>
                   <td>${escapeHtml(guest.email || "-")}</td>
-                  <td>${Number(guest.friends || 0) >= 1 ? escapeHtml(String(guest.friends)) : ""}</td>
-                  <td>${escapeHtml(guest.teamMember || guest.dj || "-")}</td>
-                  <td>${escapeHtml(guest.text || "Pending")}</td>
                   <td>
                     <div class="row-actions">
                       ${guest.checkedIn
                         ? `<button class="button secondary guest-toggle-button" onclick="uncheckGuest('${guest.id}', '${guest.eventId}')">Uncheck</button>`
                         : `<button class="button secondary guest-toggle-button" onclick="checkInGuest('${guest.id}', '${guest.eventId}')">Check In</button>`
                       }
+                    </div>
+                  </td>
+                  <td>
+                    <div class="row-actions">
                       <button class="button danger" onclick="removeGuest('${guest.id}', '${guest.eventId}', '${escapeForJs(`${guest.firstName} ${guest.lastName}`)}')">
-                        Remove Guest
+                        Remove
                       </button>
                     </div>
                   </td>
