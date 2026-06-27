@@ -669,6 +669,68 @@
       font-weight: 600;
     }
 
+    .guest-search-section {
+      min-width: 0;
+    }
+
+    .guest-search-box {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .guest-search-input {
+      width: 100%;
+      min-height: 40px;
+      padding: 10px 38px 10px 12px;
+      border-radius: 12px;
+      font-size: 13px;
+    }
+
+    .guest-search-clear {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 24px;
+      height: 24px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: rgba(0,0,0,0.22);
+      color: var(--muted);
+      cursor: pointer;
+      line-height: 1;
+      font-size: 16px;
+    }
+
+    .guest-search-clear:hover {
+      color: var(--text);
+      border-color: rgba(255,255,255,0.34);
+    }
+
+    .guest-search-count {
+      min-height: 16px;
+      margin: 7px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .guest-search-empty {
+      display: none;
+      margin-top: 10px;
+      padding: 12px;
+      border: 1px dashed var(--border);
+      border-radius: 14px;
+      color: var(--muted);
+      font-size: 13px;
+      background: rgba(255,255,255,0.025);
+    }
+
+    .guest-search-empty.visible {
+      display: block;
+    }
+
     .pill-row {
       display: flex;
       flex-wrap: wrap;
@@ -4238,6 +4300,7 @@
     let guests = [];
     let teamMembers = [];
     let openEventIds = new Set();
+    let guestSearchQueries = {};
 
     const tabButtons = document.querySelectorAll(".tab-button");
     const tabContents = document.querySelectorAll(".tab-content");
@@ -4357,6 +4420,7 @@
         const eventGuests = guests.filter((guest) => guest.eventId === event.id);
         const checkedInCount = eventGuests.filter((guest) => guest.checkedIn).length;
         const isOpen = openEventIds.has(event.id);
+        const guestSearchQuery = guestSearchQueries[event.id] || "";
 
         return `
           <article class="event-card ${isOpen ? "open" : ""}" id="card-${event.id}">
@@ -4415,6 +4479,28 @@
                   </div>
                 </div>
 
+                <div class="guest-search-section">
+                  <h4>Search Guest List</h4>
+                  <div class="guest-search-box">
+                    <input
+                      class="guest-search-input"
+                      id="guest-search-${event.id}"
+                      type="search"
+                      placeholder="Search first or last name"
+                      value="${escapeHtml(guestSearchQuery)}"
+                      autocomplete="off"
+                      oninput="filterGuestListForEvent('${event.id}', this.value)"
+                    />
+                    <button
+                      class="guest-search-clear"
+                      type="button"
+                      title="Clear search"
+                      onclick="clearGuestSearch('${event.id}')"
+                    >×</button>
+                  </div>
+                  <p class="guest-search-count" id="guest-search-count-${event.id}"></p>
+                </div>
+
                 <div class="mini-stat">
                   <strong>${checkedInCount}/${eventGuests.length}</strong>
                   <span>checked in</span>
@@ -4422,14 +4508,18 @@
               </div>
 
               <h4 class="guest-heading">Guest List</h4>
-              ${renderGuestTableForEvent(eventGuests)}
+              ${renderGuestTableForEvent(eventGuests, event.id)}
             </div>
           </article>
         `;
       }).join("");
+
+      events.forEach((event) => {
+        filterGuestListForEvent(event.id, guestSearchQueries[event.id] || "", false);
+      });
     }
 
-    function renderGuestTableForEvent(eventGuests) {
+    function renderGuestTableForEvent(eventGuests, eventId) {
       if (!eventGuests.length) {
         return `
           <div class="empty-state">
@@ -4440,7 +4530,7 @@
 
       return `
         <div style="overflow-x:auto;">
-          <table class="guest-table">
+          <table class="guest-table" id="guest-table-${eventId}">
             <colgroup>
               <col class="guest-col-name" />
               <col class="guest-col-phone" />
@@ -4464,7 +4554,10 @@
 
             <tbody>
               ${eventGuests.map((guest) => `
-                <tr class="guest-row ${guest.checkedIn ? "checked-in" : ""}">
+                <tr
+                  class="guest-row event-guest-row-${eventId} ${guest.checkedIn ? "checked-in" : ""}"
+                  data-guest-name="${escapeHtml(`${guest.firstName || ""} ${guest.lastName || ""}`).toLowerCase()}"
+                >
                   <td class="guest-name-cell">${escapeHtml(guest.firstName)} ${escapeHtml(guest.lastName)}</td>
                   <td>${escapeHtml(guest.phone || "-")}</td>
                   <td>${escapeHtml(guest.email || "-")}</td>
@@ -4486,8 +4579,67 @@
               `).join("")}
             </tbody>
           </table>
+          <div class="guest-search-empty" id="guest-search-empty-${eventId}">
+            No guests match that search for this event.
+          </div>
         </div>
       `;
+    }
+
+    function normalizeGuestSearch(value) {
+      return String(value || "").trim().toLowerCase();
+    }
+
+    function filterGuestListForEvent(eventId, query, shouldStore = true) {
+      const normalizedQuery = normalizeGuestSearch(query);
+
+      if (shouldStore) {
+        guestSearchQueries[eventId] = query;
+      }
+
+      const rows = Array.from(document.querySelectorAll(`.event-guest-row-${eventId}`));
+      const countElement = document.getElementById(`guest-search-count-${eventId}`);
+      const emptyElement = document.getElementById(`guest-search-empty-${eventId}`);
+
+      if (!rows.length) {
+        if (countElement) {
+          countElement.textContent = normalizedQuery ? "No guests to search yet." : "";
+        }
+        return;
+      }
+
+      let visibleCount = 0;
+
+      rows.forEach((row) => {
+        const guestName = row.dataset.guestName || "";
+        const isVisible = !normalizedQuery || guestName.includes(normalizedQuery);
+        row.style.display = isVisible ? "" : "none";
+
+        if (isVisible) {
+          visibleCount += 1;
+        }
+      });
+
+      if (countElement) {
+        countElement.textContent = normalizedQuery
+          ? `${visibleCount} of ${rows.length} guest${rows.length === 1 ? "" : "s"} shown`
+          : "";
+      }
+
+      if (emptyElement) {
+        emptyElement.classList.toggle("visible", Boolean(normalizedQuery && visibleCount === 0));
+      }
+    }
+
+    function clearGuestSearch(eventId) {
+      const input = document.getElementById(`guest-search-${eventId}`);
+
+      if (input) {
+        input.value = "";
+        input.focus();
+      }
+
+      filterGuestListForEvent(eventId, "");
     }
 
     function toggleEvent(eventId) {
